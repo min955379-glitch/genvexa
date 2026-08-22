@@ -1,0 +1,521 @@
+[
+  {
+    "id": "community_4bf39330-56f2-4a44-8e85-c137a7368d7b",
+    "title": "Calm premium advertising poster for a fictional organic tea brand",
+    "excerpt": "Create a calm premium advertising poster for a fictional organic tea brand “ZEN LEAF”.",
+    "prompt": "Create a calm premium advertising poster for a fictional organic tea brand \"ZEN LEAF\". FORMAT: 4:5 vertical, minimalist wellness layout. SUBJECT: a delicate glass teapot of golden herbal tea beside a single porcelain cup, fresh green leaves and a curl of gentle steam. BACKGROUND: soft sage-to-cream gradient with subtle rice-paper texture, tranquil empty space. LIGHTING: soft diffused natural morning light, delicate reflections, serene mood. TYPOGRAPHY: refined thin serif brand name \"ZEN LEAF\" centered top, tiny tagline \"Breathe. Sip. Restore.\" at the bottom. FINISH: 8k, photorealistic, calm premium wellness aesthetic.",
+    "image": "/images/zen-leaf.png",
+    "model": "GPT Image",
+    "category": "Ads & Product",
+    "tags": [
+      "wellness",
+      "product",
+      "minimal",
+      "tea"
+    ],
+    "creator": {
+      "name": "Alexei Sazonow",
+      "handle": "@alexei",
+      "avatar": "AS",
+      "color": "#f0b84e"
+    },
+    "likes": 136,
+    "copies": 424,
+    "views": 8800,
+    "featured": true,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787412654204,
+    "sourceUrl": "https://www.meigen.ai/prompt/community_4bf39330-56f2-4a44-8e85-c137a7368d7b"
+  },
+  {
+    "id": "2054447319001571357",
+    "title": "Premium wellness advertising poster for a tea brand",
+    "excerpt": "A polished commercial poster that makes a quiet cup of tea feel like a ritual.",
+    "prompt": "Create a premium wellness advertising poster for a tea brand. Design it as a polished commercial poster with soft natural morning light, an elegant ceramic cup, delicate botanicals, calm negative space, a warm cream and sage palette, tactile paper grain, restrained serif typography, and a refined editorial art direction. Keep the composition uncluttered and photorealistic.",
+    "image": "/images/tea-poster.jpg",
+    "model": "GPT Image",
+    "category": "Ads & Product",
+    "tags": [
+      "commercial",
+      "wellness",
+      "editorial"
+    ],
+    "creator": {
+      "name": "Genvexa Community",
+      "handle": "@community",
+      "avatar": "MC",
+      "color": "#7b63d4"
+    },
+    "likes": 47,
+    "copies": 212,
+    "views": 1100,
+    "featured": false,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787398254204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2054447319001571357"
+  },
+  {
+    "id": "community_2c432f6b-faaf-437a-b37c-23ae9489893b",
+    "title": "Premium luxury advertising poster for KUWOLI Tea & Co.",
+    "excerpt": "A dark, heritage-inspired luxury tea campaign with a cinematic product focus.",
+    "prompt": "Create a premium luxury advertising poster for \"KUWOLI Tea & Co.\" that blends Japanese tea culture, dark cinematic lighting, a hero tea tin, subtle botanical shadows, rich charcoal and warm amber tones, a generous field of negative space, and understated high-end serif typography. Photorealistic commercial product photography, tactile materials, sophisticated and quiet.",
+    "image": "/images/kuwoli-tea.png",
+    "model": "Nano Banana Pro",
+    "category": "Brand & Logo",
+    "tags": [
+      "luxury",
+      "packaging",
+      "tea",
+      "brand"
+    ],
+    "creator": {
+      "name": "Larus Canus",
+      "handle": "@mrlarus",
+      "avatar": "LC",
+      "color": "#d2665a"
+    },
+    "likes": 215,
+    "copies": 692,
+    "views": 11300,
+    "featured": true,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787376654204,
+    "sourceUrl": "https://www.meigen.ai/prompt/community_2c432f6b-faaf-437a-b37c-23ae9489893b"
+  },
+  {
+    "id": "community_aa9cab52-e108-4dd6-9de2-714fa65b1b62",
+    "title": "Excellent Mint Tea product advertising poster",
+    "excerpt": "Fresh mint, clean packaging, and a bright commercial color system.",
+    "prompt": "Create an attractive and professional Excellent Mint Tea product advertising poster. Keep the packaging clean and premium, use fresh mint leaves, cool green and bright white tones, soft studio shadows, a clear product hierarchy, tasteful headline placement, and a polished FMCG campaign finish. High detail, crisp reflections, commercial photography.",
+    "image": "/images/mint-tea.png",
+    "model": "GPT Image",
+    "category": "Ads & Product",
+    "tags": [
+      "food",
+      "packaging",
+      "fresh",
+      "commercial"
+    ],
+    "creator": {
+      "name": "Mira Studio",
+      "handle": "@mirastudio",
+      "avatar": "MS",
+      "color": "#63b87c"
+    },
+    "likes": 79,
+    "copies": 301,
+    "views": 2800,
+    "featured": false,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787337054204,
+    "sourceUrl": "https://www.meigen.ai/prompt/community_aa9cab52-e108-4dd6-9de2-714fa65b1b62"
+  },
+  {
+    "id": "2068271487166124323",
+    "title": "Bright, airy flowing color visual",
+    "excerpt": "A soft abstract visual built from light, haze, and long flowing color trails.",
+    "prompt": "Create a bright, translucent, airy information visual around [specific theme]. The core is not a sharp realistic subject; dissolve the theme into softly focused color mist and slender falling fluid streaks, as if light were stretched and water vapor had blurred the background. Concentrate the color in the middle, leave generous breathing room, use a luminous editorial finish, and preserve a calm sense of motion.",
+    "image": "/images/flowing-light.jpg",
+    "model": "Nano Banana",
+    "category": "Illustration & 3D",
+    "tags": [
+      "abstract",
+      "soft light",
+      "editorial"
+    ],
+    "creator": {
+      "name": "刘伯庸",
+      "handle": "@user_9619",
+      "avatar": "刘",
+      "color": "#58a9bc"
+    },
+    "likes": 0,
+    "copies": 86,
+    "views": 620,
+    "featured": false,
+    "status": "published",
+    "ratio": "2:3",
+    "createdAt": 1787319054204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2068271487166124323"
+  },
+  {
+    "id": "2015257114529419733",
+    "title": "Clean 3×3 storyboard grid",
+    "excerpt": "Nine equal panels with an overall 4:5 ratio for structured visual storytelling.",
+    "prompt": "A clean 3×3 storyboard grid with nine equal-sized panels and an overall 4:5 aspect ratio. Build a clear visual narrative from wide establishing shot to close-up details, maintain one coherent palette and character design throughout, leave subtle gutters between panels, and use a premium cinematic pre-production board aesthetic.",
+    "image": "/images/storyboard.jpg",
+    "model": "Seedance",
+    "category": "Storyboard & Characters",
+    "tags": [
+      "storyboard",
+      "cinematic",
+      "grid"
+    ],
+    "creator": {
+      "name": "Studio K",
+      "handle": "@studiok",
+      "avatar": "SK",
+      "color": "#e48950"
+    },
+    "likes": 64,
+    "copies": 188,
+    "views": 1940,
+    "featured": false,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787293854204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2015257114529419733"
+  },
+  {
+    "id": "community_44f8bae7-5634-44c7-80c0-29e8ecd7fd32",
+    "title": "Luxury organic matcha packaging concept",
+    "excerpt": "A distinctive premium packaging direction for a modern matcha brand.",
+    "prompt": "A highly distinctive and premium commercial packaging concept for a luxury organic matcha brand. Design a sculptural tea package with a restrained contemporary identity, natural paper textures, quiet Japanese references, a rich moss and cream palette, precise product photography, soft directional light, and a clean editorial campaign composition. Leave the brand name as a simple editable placeholder.",
+    "image": "/images/matcha-pack.png",
+    "model": "GPT Image",
+    "category": "Brand & Logo",
+    "tags": [
+      "matcha",
+      "packaging",
+      "identity"
+    ],
+    "creator": {
+      "name": "Chillai Kalan",
+      "handle": "@chillai",
+      "avatar": "CK",
+      "color": "#6ca874"
+    },
+    "likes": 92,
+    "copies": 277,
+    "views": 3370,
+    "featured": true,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787250654204,
+    "sourceUrl": "https://www.meigen.ai/prompt/community_44f8bae7-5634-44c7-80c0-29e8ecd7fd32"
+  },
+  {
+    "id": "2064276536073551930",
+    "title": "New Chinese tea brand package poster",
+    "excerpt": "A vertical 9:16 hero visual for a refined modern Chinese tea line.",
+    "prompt": "Generate a vertical 9:16 premium modern Chinese tea brand packaging key visual poster. Keep each image independent rather than a collage. Preserve the tea can silhouette, label hierarchy, material texture, and logo placement. Pair the package with a calm architectural background, elegant warm light, subtle ink-inspired botanical forms, and a highly finished luxury FMCG campaign style.",
+    "image": "/images/chinese-tea.jpg",
+    "model": "Nano Banana Pro",
+    "category": "Posters & Visuals",
+    "tags": [
+      "chinese tea",
+      "poster",
+      "package"
+    ],
+    "creator": {
+      "name": "Tea Archive",
+      "handle": "@tearchive",
+      "avatar": "TA",
+      "color": "#bd7b4e"
+    },
+    "likes": 35,
+    "copies": 143,
+    "views": 920,
+    "featured": false,
+    "status": "published",
+    "ratio": "9:16",
+    "createdAt": 1787225454204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2064276536073551930"
+  },
+  {
+    "id": "2082667261718872509",
+    "title": "Emerald necklace cinematic fashion story",
+    "excerpt": "A sequence of close-up luxury frames built around an emerald necklace.",
+    "prompt": "The jewelry box slowly opens as warm golden light reveals a brilliant emerald necklace. Extreme macro close-up of the gemstone and diamond accents with breathtaking clarity, crystal reflections, and luxurious sparkle. A graceful woman prepares for an exclusive gala, delicately lifting the necklace, then fastens it around her neck. Finish with a high-fashion editorial portrait where the emerald is the unmistakable focal point.",
+    "image": "/images/prompt-04.png",
+    "model": "GPT Image",
+    "category": "Portraits",
+    "tags": [
+      "jewelry",
+      "fashion",
+      "cinematic"
+    ],
+    "creator": {
+      "name": "Abdullah",
+      "handle": "@itxabdullaa",
+      "avatar": "AB",
+      "color": "#bb70aa"
+    },
+    "likes": 83,
+    "copies": 190,
+    "views": 2120,
+    "featured": false,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1787164254204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2082667261718872509"
+  },
+  {
+    "id": "2070893129939464263",
+    "title": "French apartment lifestyle portrait",
+    "excerpt": "A relaxed, editorial portrait with a quietly cinematic morning mood.",
+    "prompt": "9:16 vertical, a relaxed French lifestyle portrait in a sunlit apartment living room, captured as a candid frame from a high-end lifestyle magazine. Keep the mood warm, natural, intimate, and mature, with soft daylight, lived-in textures, a calm neutral palette, and unforced expression. Avoid influencer styling and studio polish; make it feel observed, editorial, and beautifully real.",
+    "image": "/images/prompt-06.png",
+    "model": "Nano Banana",
+    "category": "Portraits",
+    "tags": [
+      "portrait",
+      "lifestyle",
+      "editorial"
+    ],
+    "creator": {
+      "name": "Liyue AI",
+      "handle": "@liyue_ai",
+      "avatar": "LA",
+      "color": "#6f8fd0"
+    },
+    "likes": 79,
+    "copies": 207,
+    "views": 2520,
+    "featured": false,
+    "status": "published",
+    "ratio": "9:16",
+    "createdAt": 1787099454204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2070893129939464263"
+  },
+  {
+    "id": "2044411171433075106",
+    "title": "Ultra-realistic golden hour portrait",
+    "excerpt": "A cinematic portrait setup with a warm, directional, late-day glow.",
+    "prompt": "A cinematic golden hour portrait of a stylish man leaning against a classic car. Use a low perspective, warm rim light, subtle film grain, honest skin texture, quiet confidence, and a carefully controlled amber and shadow palette. Fashion editorial photography, 85mm lens, shallow depth of field, natural wind in the clothing, premium magazine finish.",
+    "image": "/images/prompt-03.png",
+    "model": "GPT Image",
+    "category": "Portraits",
+    "tags": [
+      "cinematic",
+      "fashion",
+      "portrait"
+    ],
+    "creator": {
+      "name": "Harboriis",
+      "handle": "@harboriis",
+      "avatar": "H",
+      "color": "#c1815f"
+    },
+    "likes": 112,
+    "copies": 348,
+    "views": 4500,
+    "featured": false,
+    "status": "published",
+    "ratio": "4:5",
+    "createdAt": 1786991454204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2044411171433075106"
+  },
+  {
+    "id": "2090083230317945129",
+    "title": "One photo, one premium poster",
+    "excerpt": "Turn every uploaded photo into a standalone premium poster, never a collage.",
+    "prompt": "Please turn each uploaded photo into a standalone high-end design poster, one image per output with no multi-image collage. Use a 3:4 vertical composition, preserve the subject and important details from the original photo, add an art-directed background and refined typography, and keep the visual system consistent across the series.",
+    "image": "/images/prompt-01.png",
+    "model": "GPT Image",
+    "category": "Posters & Visuals",
+    "tags": [
+      "poster",
+      "photo edit",
+      "series"
+    ],
+    "creator": {
+      "name": "Community",
+      "handle": "@community",
+      "avatar": "CO",
+      "color": "#8461d0"
+    },
+    "likes": 51,
+    "copies": 174,
+    "views": 1470,
+    "featured": false,
+    "status": "published",
+    "ratio": "3:4",
+    "createdAt": 1786883454204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2090083230317945129"
+  },
+  {
+    "id": "2090042212885098527",
+    "title": "Athletic motion campaign storyboard",
+    "excerpt": "A flexible sports visual system for trail running, swimming, or skateboarding.",
+    "prompt": "[Sport]: {trail running / swimming / skateboarding / cycling}. Build a premium campaign image system with a strong sense of motion, one hero athlete, crisp directional light, graphic color blocking, intentional negative space for copy, and three supporting detail frames. Keep the subject recognizable and the visual language consistent across every frame.",
+    "image": "/images/prompt-02.png",
+    "model": "Seedance",
+    "category": "Storyboard & Characters",
+    "tags": [
+      "sports",
+      "motion",
+      "campaign"
+    ],
+    "creator": {
+      "name": "Motion Lab",
+      "handle": "@motionlab",
+      "avatar": "ML",
+      "color": "#e27d5f"
+    },
+    "likes": 66,
+    "copies": 141,
+    "views": 2080,
+    "featured": false,
+    "ratio": "16:9",
+    "status": "published",
+    "createdAt": 1786782654204,
+    "sourceUrl": "https://www.meigen.ai/prompt/2090042212885098527"
+  },
+  {
+    "id": "pending_demo_01",
+    "title": "Premium editorial campaign with a quiet human moment",
+    "excerpt": "A community submission waiting for a quick moderation pass.",
+    "prompt": "Create a premium editorial campaign image built around a quiet human moment. Use soft window light, tactile natural textures, subtle color contrast, a clear focal subject, generous negative space for copy, and a calm high-fashion magazine finish. Keep the result tasteful, original, and suitable for a public inspiration gallery.",
+    "image": "/images/flowing-light.jpg",
+    "model": "GPT Image",
+    "category": "Posters & Visuals",
+    "tags": [
+      "editorial",
+      "campaign",
+      "minimal"
+    ],
+    "creator": {
+      "name": "Sana Malik",
+      "handle": "@sanamalik",
+      "avatar": "SM",
+      "color": "#8c6fcf"
+    },
+    "likes": 0,
+    "copies": 0,
+    "views": 0,
+    "featured": false,
+    "status": "pending",
+    "ratio": "4:5",
+    "createdAt": 1776840000000,
+    "sourceUrl": "https://www.meigen.ai/"
+  },
+  {
+    "id": "2077755463341351310",
+    "title": "Fashion jewelry commercial",
+    "excerpt": "Create an exactly 15 second premium cinematic fashion jewelry commercial in a 16:9 landscape aspect ratio, 1920×1080, 30 fps. The result must look lik",
+    "prompt": "Create an exactly 15 second premium cinematic fashion jewelry commercial in a 16:9 landscape aspect ratio, 1920×1080, 30 fps. The result must look like authentic footage captured by a professional fashion production crew, not computer generated imagery. Use a full frame cinema camera with a combination of 24mm environmental street photography, 50mm portrait photography and 85 100mm macro product shots. Natural overcast winter daylight, accurate skin tones, restrained cinematic color grading, subtle organic film grain, realistic lens falloff, minor handheld micro movement, natural autofocus transitions and small exposure adjustments. The campaign presents a coordinated jewelry collection built around a delicate eye shaped motif with a blue center stone, fine gold and silver metalwork, small studs, dangling earrings and matching necklaces. Keep the jewelry design, gemstone shape, chain thickness and metal details consistent between connected shots. 0.0–2.0 seconds: Begin with a wide 16:9 establishing shot of a quiet European city street during winter. Historic orange and muted pink storefronts, slightly wet pavement, soft cold daylight and a few tiny snowflakes drifting through the air. A stylish young adult woman with warm medium-brown skin and naturally curly dark hair stands near the corner of the building. She wears a pale blue short sleeved ruffled blouse, relaxed white wide leg trousers and understated shoes. She looks down and reaches toward a carefully arranged jewelry selection placed on a nearby outdoor café table. The camera performs a slow natural push-in while maintaining visible city architecture on both sides of the widescreen composition. 2.0–3.4 seconds: Cut to an intimate macro profile of the same woman’s ear, cheek and hands. She carefully fastens a small silver eye shaped dangling earring. Show real skin pores, fine facial hairs, subtle makeup, natural fingernails and loose curls moving gently in the winter breeze. Rack focus naturally from her fingertips to the earring. The charm swings once with believable weight before gradually settling. Add a very quiet, realistic metallic clasp sound. 3.4–5.2 seconds: Cut to a medium wide street shot. The woman gently touches both earrings, turns toward the street and gives a small spontaneous smile. The camera moves in a subtle handheld semicircle from a front three quarter view to her side profile. Her curls and blouse respond gently to the cold breeze. A few soft snowflakes pass close to the lens. Keep all buildings, windows, pavement lines and background pedestrians stable and physically correct. 5.2–6.3 seconds: Cut to a second young adult woman with straight dark hair standing beside a warm neutral stone wall. Use an extreme close-up as she attaches a delicate gold eye-shaped dangling earring with a dark-blue center stone. Her hand briefly passes close to the lens, creating a natural foreground wipe. The earring catches one restrained daylight reflection and moves according to real gravity. 6.3–8.2 seconds: Show a close portrait and collarbone level composition of the second woman wearing a soft white bow front blouse, matching earrings and a fine pendant necklace. She slowly turns her face toward the city street and looks slightly beyond the camera. The camera gently tilts from her eyes toward the necklace. The chain moves subtly with her breathing. Maintain realistic skin texture without beauty filter smoothing. 8.2–9.3 seconds: Cut to a tight macro product shot of the pendant resting above the white fabric bow. One hand softly steadies the chain near her shoulder. Use shallow but believable depth of field, physically accurate metal reflections and a small natural focus correction as the pendant stops moving. 9.3–10.4 seconds: Cut to a third young adult woman wearing a pale butter yellow knit top. Frame her lower face, neck and collarbone. She holds the matching eye-shaped pendant between two fingers, raises it slightly and turns it toward the daylight. Her breathing, hand movement and fabric texture should feel completely natural. 10.4–11.2 seconds: Show a close side profile of the third woman’s ear. She gently touches the matching eye shaped stud earring with one fingertip. Preserve accurate ear anatomy, natural hand proportions and a perfectly stable earring design. 11.2–12.3 seconds: Cut to a fourth young adult woman wearing a red and white striped knit top. Begin with a collarbone level macro shot of the matching necklace. The camera performs a slow lateral slide while her fingers softly trace the chain. Show realistic skin details, subtle fabric fibers and restrained daylight reflections. 12.3–13.5 seconds: Widen into a polished medium portrait of the fourth woman. She has a chestnut brown bob haircut with soft bangs. She looks thoughtfully toward the city and gently touches her matching stud earring. Compose her slightly off-center using the widescreen frame, leaving clean negative space beside her for the brand identity. Her expression should remain calm, natural and editorial rather than posed or exaggerated. 13.5–15.0 seconds: Direct hard cut to a pure matte black end card. Display only: “BMX”. Use perfectly spelled, widely tracked white uppercase modern sans-serif typography, precisely centered within the 16:9 frame. The logo appears with an extremely subtle fade and remains completely stable until the final frame. Do not generate additional words, slogans, subtitles or random letters. Editing and camera rhythm Use clean editorial hard cuts at approximately: 2.0 seconds, 3.4 seconds, 5.2 seconds, 6.3 seconds, 8.2 seconds, 9.3 seconds, 10.4 seconds, 11.2 seconds, 12.3 seconds and 13.5 seconds. Synchronize the cuts with the musical rhythm. Use restrained camera movement with slight natural imperfections. Avoid robotic gimbal movement, excessive slow motion, artificial speed ramps, flashy transitions and digital zooms. Every shot must use the full 16:9 landscape composition. Do not crop the footage vertically or compose it like a converted social-media portrait video. Music and synchronized sound Generate a sophisticated instrumental fashion-electro soundtrack at approximately 110 BPM. Use: A soft, defined kick, warm restrained sub-bass, crisp finger snaps, minimal closed hi-hats, airy plucked synth notes, delicate metallic chimes, soft atmospheric winter textures. Begin with faint city ambience, distant traffic and subtle winter wind. Introduce the beat gradually during the first jewelry close-up. Add a quiet metallic chime to each major jewelry reveal. Include realistic earring-clasp clicks, delicate chain movement, soft clothing sounds and restrained transition whooshes. Let the music become slightly fuller at 5.2 seconds and brighter at 9.3 seconds. At 13.5 seconds, resolve the soundtrack with a refined two-note sonic logo over the black brand card. No singing, no spoken dialogue, no lyrics, no dramatic bass drop and no overpowering sound effects. Essential realism Natural blinking, micro-expressions, breathing and eye movement. Real skin pores, fine facial hair and small natural imperfections. Accurate hands, fingers, ears, necks and facial proportions. Consistent character identity across connected shots. Realistic jewelry weight, reflections, contact shadows and gravity. Stable necklace chains and earrings without shape changes. Natural fabric folds, wind response and body movement. Subtle human camera imperfections rather than perfectly calculated motion. Avoid Vertical framing, pillarboxing, letterboxing, portrait-style composition, cropped bodies, plastic skin, excessive skin smoothing, unstable faces, changing identities, distorted fingers, extra fingers, merged fingernails, malformed ears, duplicated earrings, floating necklaces, jewelry fused into skin, inconsistent gemstones, melting metal, rubber-like movement, warped architecture, bending street lines, unrealistic snow, exaggerated lens flare, artificial bloom, excessive bokeh, oversaturated colors, fantasy lighting, random logos, misspelled text, subtitles, watermarks or any visible characteristic associated with synthetic AI generated footage.",
+    "image": "/images/2077755463341351310-thumb.jpg",
+    "poster": "/images/2077755463341351310-thumb.jpg",
+    "video": "/videos/2077755463341351310-video.mp4",
+    "mediaType": "video",
+    "model": "Seedance",
+    "category": "Videos",
+    "tags": [
+      "video",
+      "seedance",
+      "cinematic"
+    ],
+    "creator": {
+      "name": "BMX",
+      "handle": "@bmx_ai13",
+      "avatar": "B",
+      "color": "#6d82c9"
+    },
+    "likes": 36,
+    "copies": 36,
+    "views": 2946,
+    "featured": false,
+    "status": "published",
+    "ratio": "16:9",
+    "createdAt": 1773780000000,
+    "sourceUrl": "https://www.meigen.ai/video/2077755463341351310"
+  },
+  {
+    "id": "2078162454744346803",
+    "title": "Floating soda bottle cinematic reveal",
+    "excerpt": "[VISUAL] Shot on ARRI Alexa 35 with anamorphic lenses, cinematic film look, rich color science, organic highlight rolloff, subtle halation, fine film ",
+    "prompt": "[VISUAL] Shot on ARRI Alexa 35 with anamorphic lenses, cinematic film look, rich color science, organic highlight rolloff, subtle halation, fine film grain, practical in-camera lighting only, real haze, atmospheric particles, natural lens flares, no CGI. Continuing on the empty NYC street between tall buildings, under a harsh midday sun with heat haze rising from the asphalt. The young Latino man walks slowly, exhausted by the heat, handheld camera following from behind at hip height with a slight Dutch angle. He suddenly stops, noticing something ahead. The camera arcs around into a low-angle medium close-up as he stares in confusion. About six meters in front of him, a cold aluminum soda bottle floats at chest height, glowing with a soft white light. Faint cold mist curls from its surface as it gently levitates and slowly rotates, casting a subtle pool of white light onto the asphalt. The camera pushes past his shoulder to reveal the bottle, then tracks forward as he cautiously walks toward it. The bottle’s cool glow softly lights one side of his face while the warm sunlight lights the other. He stops a couple of meters away and slowly raises his hand. The bottle immediately stops drifting and smoothly descends into his open palm. As it touches his hand, the glow fades away, leaving an ordinary cold bottle covered in condensation. The camera tilts up to his face as he looks at it with a small, relieved smile. Slow-motion emphasizes the reveal, the approach, and the bottle descending into his hand before returning to real time. [AUDIO] No music. SFX only. Distant city ambience, warm wind, footsteps, breathing, a faint harmonic hum from the floating bottle, subtle hiss of cold mist, a gentle whoosh as it descends, a soft metallic touch when it lands in his hand, and silence as the glow disappears.",
+    "image": "/images/2078162454744346803-thumb.jpg",
+    "poster": "/images/2078162454744346803-thumb.jpg",
+    "video": "/videos/2078162454744346803-video.mp4",
+    "mediaType": "video",
+    "model": "Seedance",
+    "category": "Videos",
+    "tags": [
+      "video",
+      "seedance",
+      "cinematic"
+    ],
+    "creator": {
+      "name": "Marco",
+      "handle": "@maarcoofdezz",
+      "avatar": "M",
+      "color": "#b26b57"
+    },
+    "likes": 174,
+    "copies": 12,
+    "views": 2162,
+    "featured": true,
+    "status": "published",
+    "ratio": "16:9",
+    "createdAt": 1773890000000,
+    "sourceUrl": "https://www.meigen.ai/video/2078162454744346803"
+  },
+  {
+    "id": "2040004431169904790",
+    "title": "Pixar 3D animated kitchen sequence",
+    "excerpt": "Pixar 3D animated [kitchen / food setting]. [Lighting description]. CHARACTERS: [describe main chef/character(s) with exaggerated Pixar traits] SEQUEN",
+    "prompt": "Pixar 3D animated [kitchen / food setting]. [Lighting description]. CHARACTERS: [describe main chef/character(s) with exaggerated Pixar traits] SEQUENCE: 0-3s — [first action, e.g. dramatic chopping or ingredient reveal] 3-6s — [next step…] … CAMERA: [specific shots, slow-mo, pans, etc.] SOUND: [whooshes, sizzles, clinks, character sounds, music mood]",
+    "image": "/images/2040004431169904790-thumb.jpg",
+    "poster": "/images/2040004431169904790-thumb.jpg",
+    "video": "/videos/2040004431169904790-video.mp4",
+    "mediaType": "video",
+    "model": "Seedance",
+    "category": "Videos",
+    "tags": [
+      "video",
+      "seedance",
+      "cinematic"
+    ],
+    "creator": {
+      "name": "Sharon Riley",
+      "handle": "@Just_sharon7",
+      "avatar": "SR",
+      "color": "#d38d62"
+    },
+    "likes": 0,
+    "copies": 0,
+    "views": 0,
+    "featured": false,
+    "status": "published",
+    "ratio": "16:9",
+    "createdAt": 1773700000000,
+    "sourceUrl": "https://www.meigen.ai/video/2040004431169904790"
+  },
+  {
+    "id": "2072252368834769099",
+    "title": "Arcane-style desert canyon action sequence",
+    "excerpt": "@image1(雷莱克·索恩 — 行尸游骨者,白色头发,蓝绿色腐烂皮肤,红色夹克,左轮手枪,完全依照该参考图呈现,不进行任何重新设计)+ @image2(泽克 — 废料行走者地精,绿色皮肤,深色帽子,白色上衣,红色腰带,废料匕首,完全依照该参考图呈现,不进行任何重新设计)+ @image3(沙漠峡谷",
+    "prompt": "@image1(雷莱克·索恩 — 行尸游骨者,白色头发,蓝绿色腐烂皮肤,红色夹克,左轮手枪,完全依照该参考图呈现,不进行任何重新设计)+ @image2(泽克 — 废料行走者地精,绿色皮肤,深色帽子,白色上衣,红色腰带,废料匕首,完全依照该参考图呈现,不进行任何重新设计)+ @image3(沙漠峡谷,暖橙色沙丘,天然岩石地貌,戏剧性云层,明亮白昼天空,完全依照该参考图呈现,不进行任何重新设计) 画面风格: Arcane动画风格——厚涂2D/3D混合赛璐璐渲染,粗犷墨线轮廓,动态色彩光迹特效,温暖的橙色沙漠调色与雷莱克冷色调蓝绿腐化皮肤形成强烈对比,戏剧性速度线特效,快速攻击时强烈动态模糊。镜头硬切配合快节奏打击乐配乐。无对白。总时长15秒,16:9横屏,4K,24帧。 --- 0–1.5秒 — 开场首钩。低角度远景镜头。 雷莱克·索恩独自站立于沙漠峡谷中,背对镜头,风衣在热风中飘动。在他上方的高耸岩石沙丘顶端,泽克的小小身影跃离边缘发起全力冲刺跳跃,废料匕首高高举起。 1.5–3秒 — 快速跟拍镜头。 泽克以全速俯冲而下,在空中完成一次旋转,匕首拖出清晰的动态模糊弧线——他一刀干净利落地斩过雷莱克的颈部,撞击瞬间爆发出Arcane风格的色彩光爆特效。 3–4.5秒 — 慢动作恐怖喜剧节拍。雷莱克的头颅整齐地从肩膀上脱落,以慢动作砸入沙地——泽克蹲伏落地于旁边,咧嘴大笑,以为大功告成。一段短暂的寂静。 4.5–6秒 — 极近特写,雷莱克无头躯体。 雷莱克无头的躯体缓缓转向泽克——随即弯腰俯身,用一只爪手从沙地上捡起自己的头颅举到眼前。那颗被砍下的头颅的双眼猛然睁开,目光直锁泽克。 6–7.5秒 — 泽克特写。他脸上的笑容瞬间凝固——双眼骤然瞪大,耳朵猛然下垂,脸上的自信彻底消散,呆呆地盯着那颗反盯着他的头颅。 7.5–9秒 — 动态动作镜头。 雷莱克蓄力,以惊人的力道将自己的头颅像炮弹一样猛然掷向泽克——投掷瞬间速度线从出手点向四周放射,头颅在空中高速旋转直扑泽克而来。 9–10.5秒 — 快速反应镜头。 泽克在最后一刻侧身闪开,头颅以巨大冲击力砸入他身后的岩壁,留下一道深深的凹痕,沙石碎片向四周爆炸飞散。 10.5–12秒 — 追逐镜头,宽幅跟拍。雷莱克无头的躯体以出人意料的速度直扑泽克,左轮手枪已然出鞘,盲目连续开枪,泽克在沙漠地形中拼命逃窜,在岩石地貌间左躲右闪,每一步都扬起阵阵尘土。 12–13.5秒 — 泽克反击,动态英雄镜头。 泽克发现雷莱克的头颅仍卡在岩壁裂缝中——他冲刺过去,用力将其踢出,头颅如同足球般直接砸向冲来的无头躯体的颈部断口,与颈部残端碰撞发出一声巨响,雷莱克踉跄失衡倒入沙地。 13.5–15秒 — 最终定格画面。 雷莱克面朝下倒在沙漠中,头颅以歪斜的角度重新接回脖子上,一只手臂仍在微微抽搐——泽克踩着他的背站立其上,废料匕首指向下方,尘土与色彩光迹粒子在明亮的沙漠阳光中逐渐落定。画面定格以达到最强冲击力,随后渐黑结束。 --- 音效设计: - 0–1.5秒:炎热的沙漠风声,远处沙粒移动声,泽克跃起时的战吼声 - 1.5–3秒:刀刃斩击破空声,伴随Arcane色彩爆裂音效的尖锐撞击声 - 3–4.5秒:头颅落入沙地的沉闷声,诡异的寂静节拍,无头躯体转身时的诡异嘎吱声 - 4.5–6秒:双眼骤然睁开的声音,紧张的配乐开始攀升 - 6–7.5秒:用力投掷时的低吼声,头颅在空中高速旋转的破空声,配乐持续增强 - 7.5–9秒:泽克的惊恐尖叫声,头颅砸入岩石的深沉碎裂声,碎石飞散声 - 9–12秒:左轮手枪连续开火声,泽克仓皇逃窜的脚步声,配乐达到最强强度 - 12–13.5秒:泽克疾速奔跑的脚步声,踢击撞击声,头颅与颈部断口碰撞的裂响声,躯体踉跄倒地的沉闷声 - 13.5–15秒:最后倒地声,尘土落定声,胜利配乐收束归于寂静,定格画面收尾 一致性说明: 两位角色须完全依照@image1与@image2参考图呈现,不得重新设计;沙漠峡谷场景须完全依照@image3参考图呈现,不得重新设计。Arcane风格的赛璐璐渲染与厚涂质感须统一应用于所有角色与环境场景。",
+    "image": "/images/2072252368834769099-thumb.jpg",
+    "poster": "/images/2072252368834769099-thumb.jpg",
+    "video": "/videos/2072252368834769099-video.mp4",
+    "mediaType": "video",
+    "model": "Seedance",
+    "category": "Videos",
+    "tags": [
+      "video",
+      "seedance",
+      "cinematic"
+    ],
+    "creator": {
+      "name": "Cia0",
+      "handle": "@Cia0_exe",
+      "avatar": "CX",
+      "color": "#6f78c7"
+    },
+    "likes": 0,
+    "copies": 0,
+    "views": 0,
+    "featured": false,
+    "status": "published",
+    "ratio": "16:9",
+    "createdAt": 1773800000000,
+    "sourceUrl": "https://www.meigen.ai/video/2072252368834769099"
+  }
+]

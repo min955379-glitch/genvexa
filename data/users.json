@@ -1,0 +1,59 @@
+[
+  {
+    "id": "u_admin",
+    "name": "Ava Chen",
+    "email": "admin@genvexa.test",
+    "role": "admin",
+    "status": "active",
+    "avatar": "AC",
+    "credits": 9999,
+    "joinedAt": 1779647454204,
+    "favorites": []
+  },
+  {
+    "id": "u_alexei",
+    "name": "Alexei Sazonow",
+    "email": "alexei@example.com",
+    "role": "creator",
+    "status": "active",
+    "avatar": "AS",
+    "credits": 120,
+    "joinedAt": 1783535454204,
+    "favorites": [
+      "community_4bf39330-56f2-4a44-8e85-c137a7368d7b"
+    ]
+  },
+  {
+    "id": "u_mira",
+    "name": "Mira Studio",
+    "email": "mira@example.com",
+    "role": "creator",
+    "status": "active",
+    "avatar": "MS",
+    "credits": 80,
+    "joinedAt": 1784745054204,
+    "favorites": []
+  },
+  {
+    "id": "u_oliver",
+    "name": "Oliver Park",
+    "email": "oliver@example.com",
+    "role": "member",
+    "status": "active",
+    "avatar": "OP",
+    "credits": 25,
+    "joinedAt": 1786386654204,
+    "favorites": []
+  },
+  {
+    "id": "u_sana",
+    "name": "Sana Malik",
+    "email": "sana@example.com",
+    "role": "member",
+    "status": "pending",
+    "avatar": "SM",
+    "credits": 50,
+    "joinedAt": 1787164254204,
+    "favorites": []
+  }
+]
