@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || 4173);
 const app = express();
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '4mb' }));
 
 const dataDir = path.join(__dirname, 'data');
 const publicDir = path.join(__dirname, 'public');
@@ -307,6 +307,17 @@ function publicPrompt(p) {
 }
 function findPrompt(id) { return prompts.find(p => p.id === id); }
 function findUser(id) { return users.find(u => u.id === id); }
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+function validateImageAsset(image) {
+  if (!image || !String(image).startsWith('data:')) return null;
+  const [header, payload] = String(image).split(',', 2);
+  if (!/^data:image\/(png|jpe?g|webp|gif);base64$/i.test(header || '') || !payload) return 'Please upload a PNG, JPG, GIF, or WebP image.';
+  try {
+    const bytes = Buffer.from(payload, 'base64').length;
+    if (bytes > MAX_IMAGE_BYTES) return 'Image must be 2 MB or smaller.';
+  } catch { return 'The uploaded image could not be read.'; }
+  return null;
+}
 function requireAdmin(req, res, next) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (token !== `admin_${ADMIN_TOKEN}`) return res.status(401).json({ error: 'Admin authentication required' });
@@ -416,9 +427,11 @@ app.get('/api/me/:id', (req, res) => {
   res.json({ user });
 });
 
-app.post('/api/prompts', (req, res) => {
+const createPromptHandler = (req, res) => {
   const body = req.body || {};
   if (!body.prompt || !body.title) return res.status(400).json({ error: 'Title and prompt are required' });
+  const imageError = validateImageAsset(body.image);
+  if (imageError) return res.status(413).json({ error: imageError });
   const item = {
     id: `community_${crypto.randomUUID()}`,
     title: body.title,
@@ -445,10 +458,13 @@ app.post('/api/prompts', (req, res) => {
   save('prompts', prompts);
   addActivity('publish', `${item.creator.name} submitted “${item.title}” for review`, item.id);
   res.status(201).json({ prompt: publicPrompt(item) });
-});
+};
+
+app.post('/api/prompts', createPromptHandler);
 
 // Admin endpoints require the exact admin credentials and a short-lived browser session token.
 app.use('/api/admin', requireAdmin);
+app.post('/api/admin/prompts', (req, res) => createPromptHandler(req, res));
 app.get('/api/admin/stats', (_req, res) => {
   const published = prompts.filter(p => p.status === 'published');
   const pending = prompts.filter(p => p.status === 'pending');
