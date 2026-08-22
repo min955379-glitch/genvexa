@@ -341,7 +341,12 @@ app.get('/api/prompts', (req, res) => {
   if (sort === 'newest') result.sort((a, b) => b.createdAt - a.createdAt);
   else if (sort === 'popular') result.sort((a, b) => (b.likes + b.copies / 2 + b.views / 100) - (a.likes + a.copies / 2 + a.views / 100));
   else result.sort((a, b) => Number(b.featured) - Number(a.featured) || b.createdAt - a.createdAt);
-  res.json({ prompts: result.map(publicPrompt), total: result.length });
+  const total = result.length;
+  const hasLimit = req.query.limit !== undefined;
+  const limit = hasLimit ? Math.min(60, Math.max(1, Number(req.query.limit) || 24)) : total;
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const page = hasLimit ? result.slice(offset, offset + limit) : result;
+  res.json({ prompts: page.map(publicPrompt), total, offset, limit, hasMore: hasLimit ? offset + page.length < total : false });
 });
 
 app.get('/api/prompts/:id', (req, res) => {

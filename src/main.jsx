@@ -22,8 +22,8 @@ const categories = [
   { name: 'Wallpaper', icon: Sparkles }
 ];
 
-const modelTabs = ['All', 'GPT Image', 'Seedance', 'Nanobanana', 'Midjourney'];
-const modelOptions = ['GPT Image', 'Nano Banana', 'Nano Banana Pro', 'Seedance', 'Midjourney'];
+const modelTabs = ['All', 'GPT Image', 'Seedance', 'Nanobanana', 'Midjourney', 'Gemini'];
+const modelOptions = ['GPT Image', 'Nano Banana', 'Nano Banana Pro', 'Seedance', 'Midjourney', 'Gemini'];
 const ratios = ['4:5', '1:1', '9:16', '16:9'];
 
 const skills = [
@@ -114,7 +114,10 @@ function MainApp({ user, onLogin, onLogout, navigate }) {
   const [sort, setSort] = useState('featured');
   const [search, setSearch] = useState('');
   const [prompts, setPrompts] = useState([]);
+  const [totalPrompts, setTotalPrompts] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
@@ -130,15 +133,18 @@ function MainApp({ user, onLogin, onLogout, navigate }) {
     showToast.timer = window.setTimeout(() => setToast(null), 3000);
   };
 
-  const loadPrompts = async () => {
-    setLoading(true);
+  const loadPrompts = async (offset = 0, append = false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      const params = new URLSearchParams({ model, category, sort, search });
+      const params = new URLSearchParams({ model, category, sort, search, limit: '28', offset: String(offset) });
       const data = await api(`/api/prompts?${params.toString()}`);
-      setPrompts(data.prompts || []);
+      setPrompts(current => append ? [...current, ...(data.prompts || [])] : (data.prompts || []));
+      setTotalPrompts(data.total ?? data.prompts?.length ?? 0);
+      setHasMore(Boolean(data.hasMore));
     } catch (error) { showToast(error.message, 'error'); }
-    finally { setLoading(false); }
+    finally { if (append) setLoadingMore(false); else setLoading(false); }
   };
+  const loadMore = () => { if (!loadingMore && hasMore) loadPrompts(prompts.length, true); };
 
   useEffect(() => { loadPrompts(); }, [model, category, sort, search]);
   useEffect(() => {
@@ -258,6 +264,10 @@ function MainApp({ user, onLogin, onLogout, navigate }) {
             onGenerate={(prompt) => { setSelectedPrompt(prompt); setModal('generate'); }}
             onClear={() => { setSearch(''); setCategory('All'); setModel('All'); }}
             search={search}
+            totalCount={totalPrompts}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={loadMore}
           />
         )}
         {view === 'skills' && <SkillsView onUse={(skill) => { setModal('generate'); setSelectedPrompt({ ...prompts[0], title: skill.title, prompt: `${skill.description}\n\nCreate a complete prompt for this direction.`, model: 'GPT Image' }); }} />}
@@ -340,7 +350,7 @@ function Topbar({ user, search, onSearch, onPublish, onAccount, onMenu, onAdmin 
   </header>;
 }
 
-function HomeView({ prompts, loading, model, setModel, sort, setSort, category, setCategory, liked, user, onOpen, onCopy, onLike, onFavorite, onGenerate, onClear, search }) {
+function HomeView({ prompts, loading, model, setModel, sort, setSort, category, setCategory, liked, user, onOpen, onCopy, onLike, onFavorite, onGenerate, onClear, search, totalCount, hasMore, loadingMore, onLoadMore }) {
   return <>
     <section className="hero-section">
       <div className="hero-eyebrow"><span className="eyebrow-dot" /> CURATED DAILY <span className="eyebrow-rule" /> <span className="eyebrow-muted">Ideas that are ready to create</span></div>
@@ -357,8 +367,9 @@ function HomeView({ prompts, loading, model, setModel, sort, setSort, category, 
         <div className="sort-tabs"><span className="sort-label">Sort by</span><button className={sort === 'featured' ? 'sort-active' : ''} onClick={() => setSort('featured')}><Star size={13} /> Featured</button><button className={sort === 'newest' ? 'sort-active' : ''} onClick={() => setSort('newest')}><Clock3 size={13} /> Newest</button><button className={sort === 'popular' ? 'sort-active' : ''} onClick={() => setSort('popular')}><TrendingUp size={13} /> Popular</button></div>
       </div>
       {category === 'Videos' && <div className="video-library-banner"><div className="video-banner-art"><span className="video-pulse" /><Play size={21} fill="currentColor" /></div><div className="video-banner-copy"><span className="section-kicker">SEEDANCE VIDEO LIBRARY</span><h3>Watch & remix video prompts.</h3><p>Play the original clips, copy the full production prompt, then use it as a starting point for your next scene.</p></div><div className="video-banner-metrics"><span><strong>{prompts.length}</strong> video prompts</span><span><strong>15s</strong> cinematic clips</span></div></div>}
-      <div className="gallery-heading"><div><span className="section-kicker">DISCOVER</span><h2>{search ? `Results for “${search}”` : category === 'All' ? 'Fresh inspiration' : category}</h2></div><div className="gallery-meta"><span>{loading ? 'Loading...' : `${prompts.length} prompts`}</span><button className="filter-button" onClick={onClear}><Filter size={14} /> {category !== 'All' || model !== 'All' || search ? 'Clear filters' : 'All prompts'}</button></div></div>
+      <div className="gallery-heading"><div><span className="section-kicker">DISCOVER</span><h2>{search ? `Results for “${search}”` : category === 'All' ? 'Fresh inspiration' : category}</h2></div><div className="gallery-meta"><span>{loading ? 'Loading...' : `${totalCount || prompts.length} prompts`}</span><button className="filter-button" onClick={onClear}><Filter size={14} /> {category !== 'All' || model !== 'All' || search ? 'Clear filters' : 'All prompts'}</button></div></div>
       {loading ? <PromptSkeleton /> : prompts.length ? <div className="prompt-grid">{prompts.map(prompt => <PromptCard key={prompt.id} prompt={prompt} liked={liked.includes(prompt.id)} favorite={Boolean(user?.favorites?.includes(prompt.id))} onOpen={onOpen} onCopy={onCopy} onLike={onLike} onFavorite={onFavorite} onGenerate={onGenerate} />)}</div> : <EmptyState onClear={onClear} />}
+      {!loading && prompts.length > 0 && hasMore && <div className="load-more-wrap"><button className="button-secondary" onClick={onLoadMore} disabled={loadingMore}>{loadingMore ? <><span className="spinner" /> Loading more...</> : <>Load more prompts <ChevronDown size={15} /></>}</button><span>Showing {prompts.length} of {totalCount}</span></div>}
     </section>
     <section className="how-it-works"><div className="section-kicker">MAKE IT YOURS</div><h2>Copy an idea. Make it yours.</h2><div className="steps"><Step icon={Copy} number="01" title="Find your spark" text="Browse curated prompts from creators around the world." /><Step icon={Clipboard} number="02" title="Copy or remix" text="Take the exact prompt or adapt it to your own idea." /><Step icon={WandSparkles} number="03" title="Create magic" text="Generate a new image with the model and ratio you want." /></div></section>
   </>;
@@ -372,7 +383,7 @@ function PromptCard({ prompt, liked, favorite, onOpen, onCopy, onLike, onFavorit
     <div className="card-image-wrap" style={{ '--ratio': prompt.mediaType === 'video' ? '1.55' : prompt.ratio === '16:9' ? '1.15' : prompt.ratio === '9:16' ? '.72' : prompt.ratio === '1:1' ? '1' : '.82' }}>
       {prompt.mediaType === 'video' ? <video className="card-image" src={prompt.video} poster={prompt.poster || prompt.image} muted loop playsInline preload="metadata" onMouseEnter={event => event.currentTarget.play().catch(() => {})} onMouseLeave={event => { event.currentTarget.pause(); event.currentTarget.currentTime = 0; }} /> : <img className="card-image" src={prompt.image} alt={prompt.title} loading="lazy" />}
       <div className="card-image-shade" />
-      <div className="card-topline"><span className="model-chip">{prompt.model}</span>{prompt.mediaType === 'video' && <span className="video-chip"><Play size={10} fill="currentColor" /> Video</span>}{prompt.featured && <span className="featured-chip"><Star size={11} fill="currentColor" /> Featured</span>}<button className="card-more" onClick={(event) => { event.stopPropagation(); onOpen(prompt); }}><MoreHorizontal size={17} /></button></div>
+      <div className="card-topline"><span className="model-chip">{prompt.model}</span>{prompt.category === 'Videos' && <span className="video-chip"><Play size={10} fill="currentColor" /> {prompt.mediaType === 'video' ? 'Video' : 'Video prompt'}</span>}{prompt.featured && <span className="featured-chip"><Star size={11} fill="currentColor" /> Featured</span>}<button className="card-more" onClick={(event) => { event.stopPropagation(); onOpen(prompt); }}><MoreHorizontal size={17} /></button></div>
       <div className="card-hover-actions"><button title="Copy prompt" onClick={(event) => { event.stopPropagation(); onCopy(prompt); }}><Copy size={15} /></button><button title="Use this idea" onClick={(event) => { event.stopPropagation(); onGenerate(prompt); }}><Zap size={15} /></button></div>
     </div>
     <div className="card-content"><div className="card-title-row"><h3>{prompt.title}</h3><button className={`card-heart ${liked ? 'heart-on' : ''}`} onClick={(event) => { event.stopPropagation(); onLike(prompt); }}>{liked ? <Heart size={16} fill="currentColor" /> : <Heart size={16} />}</button></div><p>{prompt.excerpt}</p><div className="card-footer"><span className="creator"><span className="avatar avatar-small" style={{ '--avatar-color': prompt.creator?.color }}>{prompt.creator?.avatar || initials(prompt.creator?.name)}</span><span>{prompt.creator?.name}</span></span><span className="card-stats"><span><Copy size={12} />{formatCount(prompt.copies)}</span><span><Heart size={12} />{formatCount(prompt.likes)}</span></span></div></div>
@@ -398,8 +409,12 @@ function SearchPalette({ value, onChange, onClose, onSubmit }) {
 
 function PromptModal({ prompt, prompts, liked, favorite, onClose, onCopy, onLike, onFavorite, onGenerate, onOpen }) {
   const related = prompts.filter(item => item.id !== prompt.id && (item.category === prompt.category || item.model === prompt.model)).slice(0, 3);
-  return <div className="modal-backdrop prompt-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="prompt-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="prompt-modal-media">{prompt.mediaType === 'video' ? <video className="prompt-modal-video" src={prompt.video} poster={prompt.poster || prompt.image} controls autoPlay muted loop playsInline /> : <img src={prompt.image} alt={prompt.title} />}<div className="media-float"><span className="model-chip">{prompt.model}</span><span className="ratio-chip">{prompt.ratio}</span>{prompt.mediaType === 'video' && <span className="video-chip"><Play size={10} fill="currentColor" /> Video</span>}</div></div><div className="prompt-modal-detail"><div className="detail-header"><div><span className="section-kicker">PROMPT DETAILS</span><h2>{prompt.title}</h2><div className="detail-creator"><span className="avatar avatar-small" style={{ '--avatar-color': prompt.creator?.color }}>{prompt.creator?.avatar}</span><span>{prompt.creator?.name}</span><span className="detail-dot">·</span><span>{timeAgo(prompt.createdAt)}</span></div></div><button className={`round-icon ${liked ? 'round-liked' : ''}`} onClick={() => onLike(prompt)}>{liked ? <Heart size={17} fill="currentColor" /> : <Heart size={17} />}</button></div><div className="prompt-box"><div className="prompt-box-top"><span>Prompt</span><button onClick={() => onCopy(prompt)}><Copy size={14} /> Copy</button></div><p>{prompt.prompt}</p><div className="tag-row">{prompt.tags?.map(tag => <span key={tag}>#{tag}</span>)}</div></div><div className="modal-actions"><button className="button-primary button-wide" onClick={onGenerate}><WandSparkles size={16} /> Use this idea</button><button className={`button-secondary save-button ${favorite ? 'save-on' : ''}`} onClick={() => onFavorite(prompt)}>{favorite ? <Bookmark size={16} fill="currentColor" /> : <Bookmark size={16} />} {favorite ? 'Saved' : 'Save'}</button><a className="source-link" href={prompt.sourceUrl} target="_blank" rel="noreferrer">View source <ExternalLink size={13} /></a></div><div className="related-section"><div className="related-heading"><span>More like this</span><span className="related-count">{related.length} results</span></div><div className="related-row">{related.map(item => <button className="related-card" key={item.id} onClick={() => onOpen(item)}><img src={item.image} alt="" /><span>{item.title}</span></button>)}</div></div></div></div></div>;
+  const mediaImages = prompt.images?.length ? prompt.images : [prompt.image];
+  const [activeImage, setActiveImage] = useState(0);
+  useEffect(() => setActiveImage(0), [prompt.id]);
+  return <div className="modal-backdrop prompt-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="prompt-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="prompt-modal-media">{prompt.mediaType === 'video' ? <video className="prompt-modal-video" src={prompt.video} poster={prompt.poster || prompt.image} controls autoPlay muted loop playsInline /> : <img src={mediaImages[activeImage] || prompt.image} alt={prompt.title} />}<div className="media-float"><span className="model-chip">{prompt.model}</span><span className="ratio-chip">{prompt.ratio}</span>{prompt.category === 'Videos' && <span className="video-chip"><Play size={10} fill="currentColor" /> {prompt.mediaType === 'video' ? 'Video' : 'Video prompt'}</span>}</div>{prompt.mediaType !== 'video' && mediaImages.length > 1 && <div className="media-thumbs">{mediaImages.map((image, index) => <button key={image} className={activeImage === index ? 'media-thumb-active' : ''} onClick={() => setActiveImage(index)}><img src={image} alt={`Result ${index + 1}`} /><span>{index + 1}</span></button>)}</div>}</div><div className="prompt-modal-detail"><div className="detail-header"><div><span className="section-kicker">PROMPT DETAILS</span><h2>{prompt.title}</h2><div className="detail-creator"><span className="avatar avatar-small" style={{ '--avatar-color': prompt.creator?.color }}>{prompt.creator?.avatar}</span><span>{prompt.creator?.name}</span><span className="detail-dot">·</span><span>{timeAgo(prompt.createdAt)}</span></div></div><button className={`round-icon ${liked ? 'round-liked' : ''}`} onClick={() => onLike(prompt)}>{liked ? <Heart size={17} fill="currentColor" /> : <Heart size={17} />}</button></div><div className="prompt-box"><div className="prompt-box-top"><span>Prompt</span><button onClick={() => onCopy(prompt)}><Copy size={14} /> Copy</button></div><p>{prompt.prompt}</p><div className="tag-row">{prompt.tags?.map(tag => <span key={tag}>#{tag}</span>)}</div></div><div className="modal-actions"><button className="button-primary button-wide" onClick={onGenerate}><WandSparkles size={16} /> Use this idea</button><button className={`button-secondary save-button ${favorite ? 'save-on' : ''}`} onClick={() => onFavorite(prompt)}>{favorite ? <Bookmark size={16} fill="currentColor" /> : <Bookmark size={16} />} {favorite ? 'Saved' : 'Save'}</button><a className="source-link" href={prompt.sourceUrl} target="_blank" rel="noreferrer">View source <ExternalLink size={13} /></a></div><div className="related-section"><div className="related-heading"><span>More like this</span><span className="related-count">{related.length} results</span></div><div className="related-row">{related.map(item => <button className="related-card" key={item.id} onClick={() => onOpen(item)}><img src={item.image} alt="" /><span>{item.title}</span></button>)}</div></div></div></div></div>;
 }
+
 
 function AuthModal({ onClose, onSubmit }) {
   const [email, setEmail] = useState('');

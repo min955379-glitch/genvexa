@@ -23,6 +23,7 @@ The admin portal includes overview metrics, moderation, prompt search/filtering,
 
 - Curated gallery with model, category, search, sort, and responsive layouts
 - Dedicated Videos category with original Seedance clips, inline playback, poster thumbnails, full video prompts, and copy-to-clipboard
+- Faymas import: 1,161 prompts with 1,461 optimized local result images, searchable and paginated in the gallery
 - Prompt detail modal with source link, copy-to-clipboard, likes, favorites, and related prompts
 - History and Favorites views stored per browser account
 - Community publish flow with pending-review moderation status
