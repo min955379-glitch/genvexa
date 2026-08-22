@@ -17,6 +17,9 @@ try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* serverless bundle
 try { fs.mkdirSync(path.join(publicDir, 'images'), { recursive: true }); } catch { /* static assets are already bundled on Vercel */ }
 
 const now = Date.now();
+const ADMIN_USERNAME = String(process.env.GENVEXA_ADMIN_USERNAME || 'usertestpro').trim().toLowerCase();
+const ADMIN_PASSWORD = String(process.env.GENVEXA_ADMIN_PASSWORD || 'pass123pro');
+const ADMIN_TOKEN = String(process.env.GENVEXA_ADMIN_TOKEN || crypto.createHash('sha256').update(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}`).digest('hex'));
 const seedPrompts = [
   {
     id: 'community_4bf39330-56f2-4a44-8e85-c137a7368d7b',
@@ -268,7 +271,7 @@ const seedPrompts = [
 ];
 
 const seedUsers = [
-  { id: 'u_admin', name: 'Ava Chen', username: 'usertestpro', email: 'usertestpro@genvexa.local', role: 'admin', status: 'active', avatar: 'AC', credits: 9999, joinedAt: now - 1000 * 60 * 60 * 24 * 90, favorites: [] },
+  { id: 'u_admin', name: 'Ava Chen', username: ADMIN_USERNAME, email: `${ADMIN_USERNAME}@genvexa.local`, role: 'admin', status: 'active', avatar: 'AC', credits: 9999, joinedAt: now - 1000 * 60 * 60 * 24 * 90, favorites: [] },
   { id: 'u_alexei', name: 'Alexei Sazonow', email: 'alexei@example.com', role: 'creator', status: 'active', avatar: 'AS', credits: 120, joinedAt: now - 1000 * 60 * 60 * 24 * 45, favorites: ['community_4bf39330-56f2-4a44-8e85-c137a7368d7b'] },
   { id: 'u_mira', name: 'Mira Studio', email: 'mira@example.com', role: 'creator', status: 'active', avatar: 'MS', credits: 80, joinedAt: now - 1000 * 60 * 60 * 24 * 31, favorites: [] },
   { id: 'u_oliver', name: 'Oliver Park', email: 'oliver@example.com', role: 'member', status: 'active', avatar: 'OP', credits: 25, joinedAt: now - 1000 * 60 * 60 * 24 * 12, favorites: [] },
@@ -304,6 +307,11 @@ function publicPrompt(p) {
 }
 function findPrompt(id) { return prompts.find(p => p.id === id); }
 function findUser(id) { return users.find(u => u.id === id); }
+function requireAdmin(req, res, next) {
+  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (token !== `admin_${ADMIN_TOKEN}`) return res.status(401).json({ error: 'Admin authentication required' });
+  return next();
+}
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'genvexa-gallery-studio' }));
 
@@ -381,8 +389,16 @@ app.post('/api/auth/login', (req, res) => {
   const password = String(req.body?.password || '');
   if (!loginId || !password) return res.status(400).json({ error: 'Username/email and password are required' });
   let user = users.find(u => u.email?.toLowerCase() === loginId || u.username?.toLowerCase() === loginId);
-  const adminLogin = loginId === 'usertestpro' || user?.role === 'admin';
-  if (adminLogin && password !== 'pass123pro') return res.status(401).json({ error: 'Invalid admin username or password' });
+  const adminLogin = loginId === ADMIN_USERNAME;
+
+  if (adminLogin) {
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Invalid admin username or password' });
+    user = user || users.find(u => u.role === 'admin');
+    if (!user) return res.status(500).json({ error: 'Admin account is not configured' });
+    return res.json({ token: `admin_${ADMIN_TOKEN}`, user });
+  }
+  if (user?.role === 'admin') return res.status(401).json({ error: 'Use the admin username to access the admin portal' });
+
   if (!user) {
     const localPart = loginId.split('@')[0];
     const initials = localPart.split(/[._-]/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
@@ -431,7 +447,8 @@ app.post('/api/prompts', (req, res) => {
   res.status(201).json({ prompt: publicPrompt(item) });
 });
 
-// Admin endpoints intentionally live behind a separate portal in the UI. Add auth middleware here when wiring a real identity provider.
+// Admin endpoints require the exact admin credentials and a short-lived browser session token.
+app.use('/api/admin', requireAdmin);
 app.get('/api/admin/stats', (_req, res) => {
   const published = prompts.filter(p => p.status === 'published');
   const pending = prompts.filter(p => p.status === 'pending');

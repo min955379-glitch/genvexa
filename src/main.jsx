@@ -34,20 +34,25 @@ const skills = [
 ];
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options
-  });
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const adminToken = sessionStorage.getItem('genvexa_admin_token');
+  if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+  const response = await fetch(path, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'Something went wrong');
   return data;
 }
 
 function getStoredUser() {
-  try { return JSON.parse(localStorage.getItem('genvexa_user') || 'null'); } catch { return null; }
+  try {
+    const user = JSON.parse(localStorage.getItem('genvexa_user') || 'null');
+    if (user?.role === 'admin') { localStorage.removeItem('genvexa_user'); sessionStorage.removeItem('genvexa_admin_token'); return null; }
+    return user;
+  } catch { return null; }
 }
 function setStoredUser(user) {
-  if (user) localStorage.setItem('genvexa_user', JSON.stringify(user));
+  if (user?.role === 'admin') localStorage.removeItem('genvexa_user');
+  else if (user) localStorage.setItem('genvexa_user', JSON.stringify(user));
   else localStorage.removeItem('genvexa_user');
 }
 function getHistory() {
@@ -88,8 +93,13 @@ function App() {
     window.history.pushState({}, '', nextPath);
     setPath(nextPath);
   };
-  const onLogin = (nextUser) => { setUser(nextUser); setStoredUser(nextUser); };
-  const onLogout = () => { setUser(null); setStoredUser(null); navigate('/'); };
+  const onLogin = (nextUser, token) => {
+    setUser(nextUser);
+    setStoredUser(nextUser);
+    if (nextUser?.role === 'admin') sessionStorage.setItem('genvexa_admin_token', token || '');
+    else sessionStorage.removeItem('genvexa_admin_token');
+  };
+  const onLogout = () => { setUser(null); setStoredUser(null); sessionStorage.removeItem('genvexa_admin_token'); navigate('/'); };
 
   if (path.startsWith('/admin')) {
     return <AdminApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} />;
@@ -195,7 +205,7 @@ function MainApp({ user, onLogin, onLogout, navigate }) {
 
   const submitLogin = async (email, password) => {
     const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-    onLogin(data.user);
+    onLogin(data.user, data.token);
     setModal(null);
     showToast(`Welcome back, ${data.user.name.split(' ')[0]}`, 'success');
   };
@@ -397,7 +407,7 @@ function AuthModal({ onClose, onSubmit }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const submit = async (event) => { event.preventDefault(); setLoading(true); setError(''); try { await onSubmit(email, password); } catch (err) { setError(err.message); } finally { setLoading(false); } };
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="auth-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="auth-logo"><span className="brand-mark"><Crown size={19} fill="currentColor" /></span></div><span className="section-kicker">WELCOME TO GENVEXA</span><h2>Keep your ideas close.</h2><p>Sign in to sync favorites, history, and credits across devices.</p><form onSubmit={submit}><label>Email or username<input type="text" required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com or usertestpro" /></label><label>Password<input type="password" required value={password} onChange={event => setPassword(event.target.value)} placeholder="••••••••" /></label>{error && <div className="form-error">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Signing in...' : 'Continue'} <ArrowUpRight size={15} /></button></form><div className="auth-divider"><span>Demo account</span></div><button className="demo-login" onClick={() => { setEmail('usertestpro'); setPassword('pass123pro'); }}>Use usertestpro · pass123pro</button><small className="auth-footnote">By continuing, you agree to our Terms and Privacy Policy.</small></div></div>;
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="auth-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><div className="auth-logo"><span className="brand-mark"><Crown size={19} fill="currentColor" /></span></div><span className="section-kicker">WELCOME TO GENVEXA</span><h2>Keep your ideas close.</h2><p>Sign in to sync favorites, history, and credits across devices.</p><form onSubmit={submit}><label>Email or username<input type="text" required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com or usertestpro" /></label><label>Password<input type="password" required value={password} onChange={event => setPassword(event.target.value)} placeholder="••••••••" /></label>{error && <div className="form-error">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Signing in...' : 'Continue'} <ArrowUpRight size={15} /></button></form><small className="auth-footnote">By continuing, you agree to our Terms and Privacy Policy.</small></div></div>;
 }
 
 function AccountPopover({ user, onClose, onLogin, onLogout, onAdmin }) {
@@ -432,12 +442,12 @@ function AdminApp({ user, onLogin, onLogout, navigate }) {
 }
 
 function AdminGate({ onLogin, navigate }) {
-  const [email, setEmail] = useState('usertestpro');
-  const [password, setPassword] = useState('pass123pro');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const submit = async (event) => { event.preventDefault(); setLoading(true); setError(''); try { const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }); if (data.user.role !== 'admin') throw new Error('This account does not have admin access.'); onLogin(data.user); } catch (err) { setError(err.message); } finally { setLoading(false); } };
-  return <div className="admin-gate"><div className="admin-gate-brand"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><strong>Genvexa</strong><span>Control room</span></div><div className="admin-gate-card"><div className="admin-lock"><ShieldCheck size={22} /></div><span className="section-kicker">RESTRICTED WORKSPACE</span><h1>Sign in to the admin portal.</h1><p>Manage prompts, creators, reviews, and platform activity from one place.</p><form onSubmit={submit}><label>Username or email<input value={email} onChange={event => setEmail(event.target.value)} type="text" required /></label><label>Password<input value={password} onChange={event => setPassword(event.target.value)} type="password" required /></label>{error && <div className="form-error">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Checking access...' : 'Enter control room'} <ArrowUpRight size={15} /></button></form><button className="back-to-site" onClick={() => navigate('/') }><ArrowLeft size={15} /> Back to gallery</button><small>Admin: usertestpro / pass123pro</small></div></div>;
+  const submit = async (event) => { event.preventDefault(); setLoading(true); setError(''); try { const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }); if (data.user.role !== 'admin') throw new Error('This account does not have admin access.'); onLogin(data.user, data.token); } catch (err) { setError(err.message); } finally { setLoading(false); } };
+  return <div className="admin-gate"><div className="admin-gate-brand"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><strong>Genvexa</strong><span>Control room</span></div><div className="admin-gate-card"><div className="admin-lock"><ShieldCheck size={22} /></div><span className="section-kicker">RESTRICTED WORKSPACE</span><h1>Sign in to the admin portal.</h1><p>Manage prompts, creators, reviews, and platform activity from one place.</p><form onSubmit={submit} autoComplete="off"><label>Username or email<input name="username" autoComplete="off" value={email} onChange={event => setEmail(event.target.value)} type="text" required /></label><label>Password<input name="password" autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} type="password" required /></label>{error && <div className="form-error">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Checking access...' : 'Enter control room'} <ArrowUpRight size={15} /></button></form><button className="back-to-site" onClick={() => navigate('/') }><ArrowLeft size={15} /> Back to gallery</button></div></div>;
 }
 
 function AdminPortal({ user, onLogout, navigate, toast, showToast }) {
