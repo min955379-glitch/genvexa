@@ -2,13 +2,14 @@
   {
     "id": "u_admin",
     "name": "Ava Chen",
-    "email": "admin@genvexa.test",
+    "email": "usertestpro@genvexa.local",
     "role": "admin",
     "status": "active",
     "avatar": "AC",
     "credits": 9999,
     "joinedAt": 1779647454204,
-    "favorites": []
+    "favorites": [],
+    "username": "usertestpro"
   },
   {
     "id": "u_alexei",

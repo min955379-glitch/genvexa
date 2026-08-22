@@ -14,8 +14,8 @@ Open the live preview or visit `http://localhost:4173`.
 ## Admin portal
 
 - URL: `/admin`
-- Demo email: `admin@genvexa.test`
-- Demo password: `admin123`
+- Admin username: `usertestpro`
+- Admin password: `pass123pro`
 
 The admin portal includes overview metrics, moderation, prompt search/filtering, feature/approve/delete actions, user status controls, activity logs, and direct prompt creation.
 

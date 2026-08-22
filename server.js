@@ -268,7 +268,7 @@ const seedPrompts = [
 ];
 
 const seedUsers = [
-  { id: 'u_admin', name: 'Ava Chen', email: 'admin@genvexa.test', role: 'admin', status: 'active', avatar: 'AC', credits: 9999, joinedAt: now - 1000 * 60 * 60 * 24 * 90, favorites: [] },
+  { id: 'u_admin', name: 'Ava Chen', username: 'usertestpro', email: 'usertestpro@genvexa.local', role: 'admin', status: 'active', avatar: 'AC', credits: 9999, joinedAt: now - 1000 * 60 * 60 * 24 * 90, favorites: [] },
   { id: 'u_alexei', name: 'Alexei Sazonow', email: 'alexei@example.com', role: 'creator', status: 'active', avatar: 'AS', credits: 120, joinedAt: now - 1000 * 60 * 60 * 24 * 45, favorites: ['community_4bf39330-56f2-4a44-8e85-c137a7368d7b'] },
   { id: 'u_mira', name: 'Mira Studio', email: 'mira@example.com', role: 'creator', status: 'active', avatar: 'MS', credits: 80, joinedAt: now - 1000 * 60 * 60 * 24 * 31, favorites: [] },
   { id: 'u_oliver', name: 'Oliver Park', email: 'oliver@example.com', role: 'member', status: 'active', avatar: 'OP', credits: 25, joinedAt: now - 1000 * 60 * 60 * 24 * 12, favorites: [] },
@@ -377,14 +377,16 @@ app.post('/api/generations', (req, res) => {
 });
 
 app.post('/api/auth/login', (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
+  const loginId = String(req.body?.username || req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
-  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
-  let user = users.find(u => u.email.toLowerCase() === email);
-  if (email === 'admin@genvexa.test' && password !== 'admin123') return res.status(401).json({ error: 'Use admin123 for the demo admin account' });
+  if (!loginId || !password) return res.status(400).json({ error: 'Username/email and password are required' });
+  let user = users.find(u => u.email?.toLowerCase() === loginId || u.username?.toLowerCase() === loginId);
+  const adminLogin = loginId === 'usertestpro' || user?.role === 'admin';
+  if (adminLogin && password !== 'pass123pro') return res.status(401).json({ error: 'Invalid admin username or password' });
   if (!user) {
-    const initials = email.split('@')[0].split(/[._-]/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
-    user = { id: `u_${crypto.randomUUID()}`, name: email.split('@')[0].replace(/[._-]/g, ' '), email, role: 'member', status: 'active', avatar: initials || 'ME', credits: 25, joinedAt: Date.now(), favorites: [] };
+    const localPart = loginId.split('@')[0];
+    const initials = localPart.split(/[._-]/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
+    user = { id: `u_${crypto.randomUUID()}`, name: localPart.replace(/[._-]/g, ' '), username: loginId.includes('@') ? undefined : loginId, email: loginId.includes('@') ? loginId : `${loginId}@genvexa.local`, role: 'member', status: 'active', avatar: initials || 'ME', credits: 25, joinedAt: Date.now(), favorites: [] };
     users.push(user);
     save('users', users);
     addActivity('signup', `${user.name} joined the community`);
