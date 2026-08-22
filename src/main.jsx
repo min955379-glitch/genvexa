@@ -515,20 +515,22 @@ function AdminPromptModal({ onClose, onSave }) {
   const [image, setImage] = useState('');
   const [imageName, setImageName] = useState('');
   const [imageError, setImageError] = useState('');
+  const [video, setVideo] = useState('');
+  const [videoName, setVideoName] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoError, setVideoError] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const imageInputId = 'admin-prompt-image';
+  const videoInputId = 'admin-prompt-video';
   const maxImageBytes = 2 * 1024 * 1024;
+  const maxVideoBytes = 3 * 1024 * 1024;
 
   const handleImage = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > maxImageBytes) {
-      setImage('');
-      setImageName('');
-      setImageError('Image must be 2 MB or smaller.');
-      event.target.value = '';
-      return;
+      setImage(''); setImageName(''); setImageError('Image must be 2 MB or smaller.'); event.target.value = ''; return;
     }
     setImageError('');
     const reader = new FileReader();
@@ -536,17 +538,31 @@ function AdminPromptModal({ onClose, onSave }) {
     reader.onerror = () => { setImage(''); setImageName(''); setImageError('The image could not be read.'); };
     reader.readAsDataURL(file);
   };
+  const handleVideo = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('video/')) { setVideoError('Please choose a video file.'); event.target.value = ''; return; }
+    if (file.size > maxVideoBytes) {
+      setVideo(''); setVideoName(''); setVideoError('Video uploads must be 3 MB or smaller. Paste a hosted video URL for larger files.'); event.target.value = ''; return;
+    }
+    setVideoError(''); setVideoUrl('');
+    const reader = new FileReader();
+    reader.onload = () => { setVideo(String(reader.result || '')); setVideoName(file.name); };
+    reader.onerror = () => { setVideo(''); setVideoName(''); setVideoError('The video could not be read.'); };
+    reader.readAsDataURL(file);
+  };
   const removeImage = () => { setImage(''); setImageName(''); setImageError(''); const input = document.getElementById(imageInputId); if (input) input.value = ''; };
+  const removeVideo = () => { setVideo(''); setVideoName(''); setVideoUrl(''); setVideoError(''); const input = document.getElementById(videoInputId); if (input) input.value = ''; };
+  const selectedVideo = video || videoUrl.trim();
   const submit = async (event) => {
     event.preventDefault();
-    if (imageError) return;
-    setSaving(true);
-    setError('');
-    try { await onSave({ title, prompt, category, model, image, excerpt: prompt.slice(0, 110) }); }
+    if (imageError || videoError) return;
+    setSaving(true); setError('');
+    try { await onSave({ title, prompt, category, model, image, poster: image, video: selectedVideo, mediaType: selectedVideo ? 'video' : 'image', excerpt: prompt.slice(0, 110) }); }
     catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="admin-prompt-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><span className="section-kicker">CONTENT LIBRARY</span><h2>Create a prompt</h2><p>Add a prompt and an optional cover image directly to the gallery.</p><form onSubmit={submit}><label>Title<input required value={title} onChange={event => setTitle(event.target.value)} placeholder="Prompt title" /></label><label>Prompt<textarea required value={prompt} onChange={event => setPrompt(event.target.value)} rows="7" placeholder="Write the prompt..." /></label><div className="admin-upload-field"><div className="upload-field-label"><span>Cover image</span><small>Optional · maximum 2 MB</small></div>{image ? <div className="image-upload-preview"><img src={image} alt="Selected cover preview" /><div><strong>{imageName}</strong><span>Ready to attach to this prompt</span></div><button type="button" className="remove-upload" onClick={removeImage}><X size={14} /></button></div> : <label className={`image-upload ${imageError ? 'image-upload-error' : ''}`} htmlFor={imageInputId}><ImagePlus size={20} /><span><strong>Choose an image</strong><small>PNG, JPG, GIF, or WebP · 2 MB max</small></span><input id={imageInputId} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleImage} /></label>}{imageError && <div className="upload-error-text">{imageError}</div>}</div><div className="form-grid"><label>Category<select value={category} onChange={event => setCategory(event.target.value)}>{categories.filter(item => item.name !== 'All').map(item => <option key={item.name}>{item.name}</option>)}</select></label><label>Model<select value={model} onChange={event => setModel(event.target.value)}>{modelOptions.map(option => <option key={option}>{option}</option>)}</select></label></div>{error && <div className="form-error">{error}</div>}<div className="admin-modal-actions"><button type="button" className="button-secondary" onClick={onClose}>Cancel</button><button className="button-primary" disabled={saving || Boolean(imageError)}>{saving ? 'Creating...' : 'Create prompt'} <ArrowUpRight size={15} /></button></div></form></div></div>;
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="admin-prompt-modal"><button className="modal-close" onClick={onClose}><X size={18} /></button><span className="section-kicker">CONTENT LIBRARY</span><h2>Create a prompt</h2><p>Add a prompt and optional image or video media directly to the gallery.</p><form onSubmit={submit}><label>Title<input required value={title} onChange={event => setTitle(event.target.value)} placeholder="Prompt title" /></label><label>Prompt<textarea required value={prompt} onChange={event => setPrompt(event.target.value)} rows="7" placeholder="Write the prompt..." /></label><div className="admin-upload-field"><div className="upload-field-label"><span>Cover image</span><small>Optional · maximum 2 MB</small></div>{image ? <div className="image-upload-preview"><img src={image} alt="Selected cover preview" /><div><strong>{imageName}</strong><span>Ready to attach to this prompt</span></div><button type="button" className="remove-upload" onClick={removeImage}><X size={14} /></button></div> : <label className={`image-upload ${imageError ? 'image-upload-error' : ''}`} htmlFor={imageInputId}><ImagePlus size={20} /><span><strong>Choose an image</strong><small>PNG, JPG, GIF, or WebP · 2 MB max</small></span><input id={imageInputId} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleImage} /></label>}{imageError && <div className="upload-error-text">{imageError}</div>}</div><div className="admin-upload-field"><div className="upload-field-label"><span>Video result</span><small>Optional · upload up to 3 MB or use a hosted URL</small></div>{selectedVideo ? <div className="video-upload-preview"><video src={selectedVideo} controls muted playsInline /><div><strong>{videoName || videoUrl}</strong><span>{video ? 'Local video ready to attach' : 'Hosted video URL ready'}</span></div><button type="button" className="remove-upload" onClick={removeVideo}><X size={14} /></button></div> : <label className={`image-upload video-upload ${videoError ? 'image-upload-error' : ''}`} htmlFor={videoInputId}><Clapperboard size={20} /><span><strong>Upload a video</strong><small>MP4, WebM, MOV, or OGG · 3 MB max</small></span><input id={videoInputId} type="file" accept="video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleVideo} /></label>}{!selectedVideo && <div className="video-url-row"><span>or paste video URL</span><input type="url" value={videoUrl} onChange={event => { setVideoUrl(event.target.value); setVideo(''); setVideoName(''); setVideoError(''); }} placeholder="https://cdn.example.com/video.mp4" /></div>}{videoError && <div className="upload-error-text">{videoError}</div>}</div><div className="form-grid"><label>Category<select value={category} onChange={event => setCategory(event.target.value)}>{categories.filter(item => item.name !== 'All').map(item => <option key={item.name}>{item.name}</option>)}</select></label><label>Model<select value={model} onChange={event => setModel(event.target.value)}>{modelOptions.map(option => <option key={option}>{option}</option>)}</select></label></div>{error && <div className="form-error">{error}</div>}<div className="admin-modal-actions"><button type="button" className="button-secondary" onClick={onClose}>Cancel</button><button className="button-primary" disabled={saving || Boolean(imageError) || Boolean(videoError)}>{saving ? 'Creating...' : 'Create prompt'} <ArrowUpRight size={15} /></button></div></form></div></div>;
 }
 
 

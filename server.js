@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || 4173);
 const app = express();
-app.use(express.json({ limit: '4mb' }));
+app.use(express.json({ limit: '6mb' }));
 
 const dataDir = path.join(__dirname, 'data');
 const publicDir = path.join(__dirname, 'public');
@@ -318,6 +318,17 @@ function validateImageAsset(image) {
   } catch { return 'The uploaded image could not be read.'; }
   return null;
 }
+const MAX_VIDEO_BYTES = 3 * 1024 * 1024;
+function validateVideoAsset(video) {
+  if (!video || !String(video).startsWith('data:')) return null;
+  const [header, payload] = String(video).split(',', 2);
+  if (!/^data:video\/(mp4|webm|quicktime|ogg);base64$/i.test(header || '') || !payload) return 'Please upload an MP4, WebM, MOV, or OGG video.';
+  try {
+    const bytes = Buffer.from(payload, 'base64').length;
+    if (bytes > MAX_VIDEO_BYTES) return 'Uploaded video must be 3 MB or smaller. For larger files, paste a hosted video URL.';
+  } catch { return 'The uploaded video could not be read.'; }
+  return null;
+}
 function requireAdmin(req, res, next) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (token !== `admin_${ADMIN_TOKEN}`) return res.status(401).json({ error: 'Admin authentication required' });
@@ -437,6 +448,8 @@ const createPromptHandler = (req, res) => {
   if (!body.prompt || !body.title) return res.status(400).json({ error: 'Title and prompt are required' });
   const imageError = validateImageAsset(body.image);
   if (imageError) return res.status(413).json({ error: imageError });
+  const videoError = validateVideoAsset(body.video);
+  if (videoError) return res.status(413).json({ error: videoError });
   const item = {
     id: `community_${crypto.randomUUID()}`,
     title: body.title,
