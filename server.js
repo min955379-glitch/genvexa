@@ -272,14 +272,14 @@ if (adminUser) {
 }
 
 
-const productionCsp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+const productionCsp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com https://*.supabase.co; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' wss: https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Content-Security-Policy', isProduction || process.env.VERCEL ? productionCsp : "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' ws: http://localhost:*; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  res.setHeader('Content-Security-Policy', isProduction || process.env.VERCEL ? productionCsp : "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com https://*.supabase.co; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' ws: http://localhost:* https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
   if (req.path.startsWith('/api/')) { res.setHeader('Cache-Control', 'no-store, private'); res.setHeader('Pragma', 'no-cache'); }
   next();
 });

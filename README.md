@@ -39,7 +39,7 @@ The admin portal includes overview metrics, moderation, prompt search/filtering,
 3. Create the first account through `/signup`, then promote that profile to `admin` from a trusted SQL session.
 4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only; it must never use the `VITE_` prefix or appear in browser code.
 
-The app uses Supabase Auth when configured, with secure bearer-token verification on the server and a protected `profiles` directory for admin user management. Without Supabase environment variables it shows a clear configuration state instead of pretending authentication is working.
+The app uses Supabase Auth with secure bearer-token verification on the server and a protected `profiles` directory for admin user management. The browser-safe anon configuration is bundled as a fallback; the server still refuses protected operations until the server-only Supabase secret and schema are configured.
 
 ## Production wiring
 

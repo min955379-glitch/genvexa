@@ -20,7 +20,7 @@
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
         "Cross-Origin-Opener-Policy": "same-origin",
         "X-Robots-Tag": "index, follow",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com https://*.supabase.co; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' wss: https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
       },
       "continue": true
     },
