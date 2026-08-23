@@ -364,7 +364,12 @@ app.post('/api/prompts', requireUser, createPromptHandler);
 app.use('/api/admin', (req, res, next) => req.method === 'OPTIONS' ? res.status(204).end() : next());
 app.use('/api/admin', requireAdmin);
 app.post('/api/admin/prompts', createPromptHandler);
-app.post('/api/admin/save', (req, res) => { save('prompts', prompts); save('users', users); save('activities', activities); res.json({ ok: true, savedAt: new Date().toISOString() }); });
+app.post('/api/admin/save', (req, res) => {
+  const deletedPromptIds = Array.isArray(req.body?.deletedPromptIds) ? req.body.deletedPromptIds : [];
+  if (deletedPromptIds.length) prompts = prompts.filter(prompt => !deletedPromptIds.includes(prompt.id));
+  save('prompts', prompts); save('users', users); save('activities', activities);
+  res.json({ ok: true, savedAt: new Date().toISOString(), deleted: deletedPromptIds.length });
+});
 app.get('/api/admin/stats', (_req, res) => {
   const published = prompts.filter(prompt => prompt.status === 'published');
   res.json({ stats: { prompts: published.length, users: users.length, creators: users.filter(user => user.role === 'creator' && user.status === 'active').length, pending: prompts.filter(prompt => prompt.status === 'pending').length, copies: prompts.reduce((sum, prompt) => sum + Number(prompt.copies || 0), 0), views: prompts.reduce((sum, prompt) => sum + Number(prompt.views || 0), 0), featured: prompts.filter(prompt => prompt.featured).length } });

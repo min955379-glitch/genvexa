@@ -351,3 +351,18 @@ kbd { display: inline-flex; align-items: center; gap: 2px; height: 22px; padding
 :root[data-theme='dark'] .admin-table th, :root[data-theme='dark'] .admin-table td, :root[data-theme='dark'] .activity-item, :root[data-theme='dark'] .pending-row, :root[data-theme='dark'] .creator-rank { border-color: #2b2933; }
 :root[data-theme='dark'] .admin-search, :root[data-theme='dark'] .filter-pills, :root[data-theme='dark'] .filter-square, :root[data-theme='dark'] .range-select, :root[data-theme='dark'] .user-action, :root[data-theme='dark'] .icon-button { border-color: #423e4c; color: #c1bdc9; background: #201e27; }
 :root[data-theme='dark'] .admin-search input { color: #f0edf5; }.theme-button.admin-gate-theme { margin-left: auto; }.not-found-actions .theme-button { border-color: var(--line); }
+:root[data-theme='dark'] .admin-content { color: #f2eff7; }
+:root[data-theme='dark'] .admin-breadcrumb, :root[data-theme='dark'] .admin-panel-kicker { color: #b3adbf; }
+:root[data-theme='dark'] .admin-topbar h1, :root[data-theme='dark'] .admin-content h2, :root[data-theme='dark'] .admin-content h3, :root[data-theme='dark'] .admin-stat-card > strong { color: #f7f4fb !important; }
+:root[data-theme='dark'] .admin-stat-label, :root[data-theme='dark'] .admin-stat-card .stat-change, :root[data-theme='dark'] .admin-page-intro p, :root[data-theme='dark'] .table-count, :root[data-theme='dark'] .admin-table th { color: #c0bacb !important; }
+:root[data-theme='dark'] .admin-table td, :root[data-theme='dark'] .table-prompt strong, :root[data-theme='dark'] .table-creator, :root[data-theme='dark'] .pending-info strong, :root[data-theme='dark'] .creator-rank strong { color: #e2deea !important; }
+:root[data-theme='dark'] .table-prompt span, :root[data-theme='dark'] .pending-info span, :root[data-theme='dark'] .creator-rank div span, :root[data-theme='dark'] .activity-item div > span, :root[data-theme='dark'] .activity-id { color: #aaa3b4 !important; }
+:root[data-theme='dark'] .activity-item p { color: #ddd8e7 !important; }
+:root[data-theme='dark'] .admin-help, :root[data-theme='dark'] .admin-search, :root[data-theme='dark'] .range-select, :root[data-theme='dark'] .filter-square, :root[data-theme='dark'] .user-action { color: #d3cedc !important; }
+:root[data-theme='dark'] .admin-table tbody tr:hover { background: #211f29; }
+:root[data-theme='dark'] .metric-bar-head, :root[data-theme='dark'] .chart-footnote { color: #bdb6c8; }
+
+.hero-section h1, .gallery-heading h2, .collection-heading h1, .skills-view h1, .how-it-works h2, .info-main h1, .not-found-shell h1, .admin-topbar h1, .admin-content h2, .admin-gate-card h1, .detail-header h2, .skill-card h3 { background: linear-gradient(105deg, #1e1c25 0%, #7450dc 45%, #d05eaa 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; text-wrap: balance; }
+:root[data-theme='dark'] .hero-section h1, :root[data-theme='dark'] .gallery-heading h2, :root[data-theme='dark'] .collection-heading h1, :root[data-theme='dark'] .skills-view h1, :root[data-theme='dark'] .how-it-works h2, :root[data-theme='dark'] .info-main h1, :root[data-theme='dark'] .not-found-shell h1, :root[data-theme='dark'] .admin-topbar h1, :root[data-theme='dark'] .admin-content h2, :root[data-theme='dark'] .admin-gate-card h1, :root[data-theme='dark'] .detail-header h2, :root[data-theme='dark'] .skill-card h3 { background: linear-gradient(105deg, #f6f2ff 0%, #b39aff 46%, #f0a3d0 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+
+.soft-surface { border-radius: 18px; box-shadow: 0 14px 34px rgba(31, 23, 62, .08); }
