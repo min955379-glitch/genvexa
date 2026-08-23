@@ -28,11 +28,10 @@ The admin portal includes overview metrics, moderation, prompt search/filtering,
 - Prompt detail modal with source link, copy-to-clipboard, likes, favorites, and related prompts
 - History and Favorites views stored per browser account
 - Community publish flow with pending-review moderation status
-- Demo generation flow with model and aspect-ratio controls
 - Email sign-in demo and admin access state
 - JSON-backed persistence in `data/prompts.json`, `data/users.json`, and `data/activities.json`
-- API routes for prompts, likes, copies, favorites, generations, auth, users, moderation, and stats
+- API routes for prompts, likes, copies, favorites, auth, users, moderation, media, and stats
 
 ## Production wiring
 
-`POST /api/generations` is the integration point for a real provider such as OpenAI Images, Replicate, or another image/video backend. The included no-key demo returns a local preview so the complete user flow works immediately. Add real authentication, object storage, payment/credit verification, and provider secrets before deploying publicly.
+All media is delivered through the controlled media proxy and persisted in managed storage when configured. Add a real database and object storage before deploying publicly.

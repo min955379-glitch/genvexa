@@ -6,10 +6,10 @@
     "role": "admin",
     "status": "active",
     "avatar": "AC",
-    "credits": 9999,
     "joinedAt": 1779647454204,
     "favorites": [],
-    "username": "usertestpro"
+    "username": "usertestpro",
+    "passwordHash": "36939701e5632661c0a3eb2f718fd90e:188d5291093351dddc333d1d8b81b6e8307540fe9e882323cef0857d54df8bc2d78d15293dc1b3c69db0faed5371bce0cb0e28d95e2b64aa5d94767636e67420"
   },
   {
     "id": "u_alexei",
@@ -18,7 +18,6 @@
     "role": "creator",
     "status": "active",
     "avatar": "AS",
-    "credits": 120,
     "joinedAt": 1783535454204,
     "favorites": [
       "community_4bf39330-56f2-4a44-8e85-c137a7368d7b"
@@ -31,7 +30,6 @@
     "role": "creator",
     "status": "active",
     "avatar": "MS",
-    "credits": 80,
     "joinedAt": 1784745054204,
     "favorites": []
   },
@@ -42,7 +40,6 @@
     "role": "member",
     "status": "active",
     "avatar": "OP",
-    "credits": 25,
     "joinedAt": 1786386654204,
     "favorites": []
   },
@@ -53,7 +50,6 @@
     "role": "member",
     "status": "pending",
     "avatar": "SM",
-    "credits": 50,
     "joinedAt": 1787164254204,
     "favorites": []
   }

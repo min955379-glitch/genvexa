@@ -1,0 +1,10 @@
+{
+  "name": "Genvexa",
+  "short_name": "Genvexa",
+  "description": "A curated gallery of reusable AI image and video prompts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfbfc",
+  "theme_color": "#ffffff",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

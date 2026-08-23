@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,544 +10,439 @@ const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || 4173);
 const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '6mb' }));
 
 const dataDir = path.join(__dirname, 'data');
 const publicDir = path.join(__dirname, 'public');
-try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* serverless bundles can be read-only */ }
-try { fs.mkdirSync(path.join(publicDir, 'images'), { recursive: true }); } catch { /* static assets are already bundled on Vercel */ }
+try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* read-only serverless bundle */ }
+try { fs.mkdirSync(path.join(publicDir, 'images'), { recursive: true }); } catch { /* static files are bundled */ }
 
 const now = Date.now();
 const ADMIN_USERNAME = String(process.env.GENVEXA_ADMIN_USERNAME || 'usertestpro').trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.GENVEXA_ADMIN_PASSWORD || 'pass123pro');
-const ADMIN_TOKEN = String(process.env.GENVEXA_ADMIN_TOKEN || crypto.createHash('sha256').update(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}`).digest('hex'));
-const seedPrompts = [
-  {
-    id: 'community_4bf39330-56f2-4a44-8e85-c137a7368d7b',
-    title: 'Calm premium advertising poster for a fictional organic tea brand',
-    excerpt: 'Create a calm premium advertising poster for a fictional organic tea brand “ZEN LEAF”.',
-    prompt: 'Create a calm premium advertising poster for a fictional organic tea brand "ZEN LEAF". FORMAT: 4:5 vertical, minimalist wellness layout. SUBJECT: a delicate glass teapot of golden herbal tea beside a single porcelain cup, fresh green leaves and a curl of gentle steam. BACKGROUND: soft sage-to-cream gradient with subtle rice-paper texture, tranquil empty space. LIGHTING: soft diffused natural morning light, delicate reflections, serene mood. TYPOGRAPHY: refined thin serif brand name "ZEN LEAF" centered top, tiny tagline "Breathe. Sip. Restore." at the bottom. FINISH: 8k, photorealistic, calm premium wellness aesthetic.',
-    image: '/images/zen-leaf.png',
-    model: 'GPT Image',
-    category: 'Ads & Product',
-    tags: ['wellness', 'product', 'minimal', 'tea'],
-    creator: { name: 'Alexei Sazonow', handle: '@alexei', avatar: 'AS', color: '#f0b84e' },
-    likes: 136,
-    copies: 424,
-    views: 8800,
-    featured: true,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 3,
-    sourceUrl: 'https://www.meigen.ai/prompt/community_4bf39330-56f2-4a44-8e85-c137a7368d7b'
-  },
-  {
-    id: '2054447319001571357',
-    title: 'Premium wellness advertising poster for a tea brand',
-    excerpt: 'A polished commercial poster that makes a quiet cup of tea feel like a ritual.',
-    prompt: 'Create a premium wellness advertising poster for a tea brand. Design it as a polished commercial poster with soft natural morning light, an elegant ceramic cup, delicate botanicals, calm negative space, a warm cream and sage palette, tactile paper grain, restrained serif typography, and a refined editorial art direction. Keep the composition uncluttered and photorealistic.',
-    image: '/images/tea-poster.jpg',
-    model: 'GPT Image',
-    category: 'Ads & Product',
-    tags: ['commercial', 'wellness', 'editorial'],
-    creator: { name: 'Genvexa Community', handle: '@community', avatar: 'MC', color: '#7b63d4' },
-    likes: 47,
-    copies: 212,
-    views: 1100,
-    featured: false,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 7,
-    sourceUrl: 'https://www.meigen.ai/prompt/2054447319001571357'
-  },
-  {
-    id: 'community_2c432f6b-faaf-437a-b37c-23ae9489893b',
-    title: 'Premium luxury advertising poster for KUWOLI Tea & Co.',
-    excerpt: 'A dark, heritage-inspired luxury tea campaign with a cinematic product focus.',
-    prompt: 'Create a premium luxury advertising poster for "KUWOLI Tea & Co." that blends Japanese tea culture, dark cinematic lighting, a hero tea tin, subtle botanical shadows, rich charcoal and warm amber tones, a generous field of negative space, and understated high-end serif typography. Photorealistic commercial product photography, tactile materials, sophisticated and quiet.',
-    image: '/images/kuwoli-tea.png',
-    model: 'Nano Banana Pro',
-    category: 'Brand & Logo',
-    tags: ['luxury', 'packaging', 'tea', 'brand'],
-    creator: { name: 'Larus Canus', handle: '@mrlarus', avatar: 'LC', color: '#d2665a' },
-    likes: 215,
-    copies: 692,
-    views: 11300,
-    featured: true,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 13,
-    sourceUrl: 'https://www.meigen.ai/prompt/community_2c432f6b-faaf-437a-b37c-23ae9489893b'
-  },
-  {
-    id: 'community_aa9cab52-e108-4dd6-9de2-714fa65b1b62',
-    title: 'Excellent Mint Tea product advertising poster',
-    excerpt: 'Fresh mint, clean packaging, and a bright commercial color system.',
-    prompt: 'Create an attractive and professional Excellent Mint Tea product advertising poster. Keep the packaging clean and premium, use fresh mint leaves, cool green and bright white tones, soft studio shadows, a clear product hierarchy, tasteful headline placement, and a polished FMCG campaign finish. High detail, crisp reflections, commercial photography.',
-    image: '/images/mint-tea.png',
-    model: 'GPT Image',
-    category: 'Ads & Product',
-    tags: ['food', 'packaging', 'fresh', 'commercial'],
-    creator: { name: 'Mira Studio', handle: '@mirastudio', avatar: 'MS', color: '#63b87c' },
-    likes: 79,
-    copies: 301,
-    views: 2800,
-    featured: false,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 24,
-    sourceUrl: 'https://www.meigen.ai/prompt/community_aa9cab52-e108-4dd6-9de2-714fa65b1b62'
-  },
-  {
-    id: '2068271487166124323',
-    title: 'Bright, airy flowing color visual',
-    excerpt: 'A soft abstract visual built from light, haze, and long flowing color trails.',
-    prompt: 'Create a bright, translucent, airy information visual around [specific theme]. The core is not a sharp realistic subject; dissolve the theme into softly focused color mist and slender falling fluid streaks, as if light were stretched and water vapor had blurred the background. Concentrate the color in the middle, leave generous breathing room, use a luminous editorial finish, and preserve a calm sense of motion.',
-    image: '/images/flowing-light.jpg',
-    model: 'Nano Banana',
-    category: 'Illustration & 3D',
-    tags: ['abstract', 'soft light', 'editorial'],
-    creator: { name: '刘伯庸', handle: '@user_9619', avatar: '刘', color: '#58a9bc' },
-    likes: 0,
-    copies: 86,
-    views: 620,
-    featured: false,
-    status: 'published',
-    ratio: '2:3',
-    createdAt: now - 1000 * 60 * 60 * 29,
-    sourceUrl: 'https://www.meigen.ai/prompt/2068271487166124323'
-  },
-  {
-    id: '2015257114529419733',
-    title: 'Clean 3×3 storyboard grid',
-    excerpt: 'Nine equal panels with an overall 4:5 ratio for structured visual storytelling.',
-    prompt: 'A clean 3×3 storyboard grid with nine equal-sized panels and an overall 4:5 aspect ratio. Build a clear visual narrative from wide establishing shot to close-up details, maintain one coherent palette and character design throughout, leave subtle gutters between panels, and use a premium cinematic pre-production board aesthetic.',
-    image: '/images/storyboard.jpg',
-    model: 'Seedance',
-    category: 'Storyboard & Characters',
-    tags: ['storyboard', 'cinematic', 'grid'],
-    creator: { name: 'Studio K', handle: '@studiok', avatar: 'SK', color: '#e48950' },
-    likes: 64,
-    copies: 188,
-    views: 1940,
-    featured: false,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 36,
-    sourceUrl: 'https://www.meigen.ai/prompt/2015257114529419733'
-  },
-  {
-    id: 'community_44f8bae7-5634-44c7-80c0-29e8ecd7fd32',
-    title: 'Luxury organic matcha packaging concept',
-    excerpt: 'A distinctive premium packaging direction for a modern matcha brand.',
-    prompt: 'A highly distinctive and premium commercial packaging concept for a luxury organic matcha brand. Design a sculptural tea package with a restrained contemporary identity, natural paper textures, quiet Japanese references, a rich moss and cream palette, precise product photography, soft directional light, and a clean editorial campaign composition. Leave the brand name as a simple editable placeholder.',
-    image: '/images/matcha-pack.png',
-    model: 'GPT Image',
-    category: 'Brand & Logo',
-    tags: ['matcha', 'packaging', 'identity'],
-    creator: { name: 'Chillai Kalan', handle: '@chillai', avatar: 'CK', color: '#6ca874' },
-    likes: 92,
-    copies: 277,
-    views: 3370,
-    featured: true,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 48,
-    sourceUrl: 'https://www.meigen.ai/prompt/community_44f8bae7-5634-44c7-80c0-29e8ecd7fd32'
-  },
-  {
-    id: '2064276536073551930',
-    title: 'New Chinese tea brand package poster',
-    excerpt: 'A vertical 9:16 hero visual for a refined modern Chinese tea line.',
-    prompt: 'Generate a vertical 9:16 premium modern Chinese tea brand packaging key visual poster. Keep each image independent rather than a collage. Preserve the tea can silhouette, label hierarchy, material texture, and logo placement. Pair the package with a calm architectural background, elegant warm light, subtle ink-inspired botanical forms, and a highly finished luxury FMCG campaign style.',
-    image: '/images/chinese-tea.jpg',
-    model: 'Nano Banana Pro',
-    category: 'Posters & Visuals',
-    tags: ['chinese tea', 'poster', 'package'],
-    creator: { name: 'Tea Archive', handle: '@tearchive', avatar: 'TA', color: '#bd7b4e' },
-    likes: 35,
-    copies: 143,
-    views: 920,
-    featured: false,
-    status: 'published',
-    ratio: '9:16',
-    createdAt: now - 1000 * 60 * 60 * 55,
-    sourceUrl: 'https://www.meigen.ai/prompt/2064276536073551930'
-  },
-  {
-    id: '2082667261718872509',
-    title: 'Emerald necklace cinematic fashion story',
-    excerpt: 'A sequence of close-up luxury frames built around an emerald necklace.',
-    prompt: 'The jewelry box slowly opens as warm golden light reveals a brilliant emerald necklace. Extreme macro close-up of the gemstone and diamond accents with breathtaking clarity, crystal reflections, and luxurious sparkle. A graceful woman prepares for an exclusive gala, delicately lifting the necklace, then fastens it around her neck. Finish with a high-fashion editorial portrait where the emerald is the unmistakable focal point.',
-    image: '/images/prompt-04.png',
-    model: 'GPT Image',
-    category: 'Portraits',
-    tags: ['jewelry', 'fashion', 'cinematic'],
-    creator: { name: 'Abdullah', handle: '@itxabdullaa', avatar: 'AB', color: '#bb70aa' },
-    likes: 83,
-    copies: 190,
-    views: 2120,
-    featured: false,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 72,
-    sourceUrl: 'https://www.meigen.ai/prompt/2082667261718872509'
-  },
-  {
-    id: '2070893129939464263',
-    title: 'French apartment lifestyle portrait',
-    excerpt: 'A relaxed, editorial portrait with a quietly cinematic morning mood.',
-    prompt: '9:16 vertical, a relaxed French lifestyle portrait in a sunlit apartment living room, captured as a candid frame from a high-end lifestyle magazine. Keep the mood warm, natural, intimate, and mature, with soft daylight, lived-in textures, a calm neutral palette, and unforced expression. Avoid influencer styling and studio polish; make it feel observed, editorial, and beautifully real.',
-    image: '/images/prompt-06.png',
-    model: 'Nano Banana',
-    category: 'Portraits',
-    tags: ['portrait', 'lifestyle', 'editorial'],
-    creator: { name: 'Liyue AI', handle: '@liyue_ai', avatar: 'LA', color: '#6f8fd0' },
-    likes: 79,
-    copies: 207,
-    views: 2520,
-    featured: false,
-    status: 'published',
-    ratio: '9:16',
-    createdAt: now - 1000 * 60 * 60 * 90,
-    sourceUrl: 'https://www.meigen.ai/prompt/2070893129939464263'
-  },
-  {
-    id: '2044411171433075106',
-    title: 'Ultra-realistic golden hour portrait',
-    excerpt: 'A cinematic portrait setup with a warm, directional, late-day glow.',
-    prompt: 'A cinematic golden hour portrait of a stylish man leaning against a classic car. Use a low perspective, warm rim light, subtle film grain, honest skin texture, quiet confidence, and a carefully controlled amber and shadow palette. Fashion editorial photography, 85mm lens, shallow depth of field, natural wind in the clothing, premium magazine finish.',
-    image: '/images/prompt-03.png',
-    model: 'GPT Image',
-    category: 'Portraits',
-    tags: ['cinematic', 'fashion', 'portrait'],
-    creator: { name: 'Harboriis', handle: '@harboriis', avatar: 'H', color: '#c1815f' },
-    likes: 112,
-    copies: 348,
-    views: 4500,
-    featured: false,
-    status: 'published',
-    ratio: '4:5',
-    createdAt: now - 1000 * 60 * 60 * 120,
-    sourceUrl: 'https://www.meigen.ai/prompt/2044411171433075106'
-  },
-  {
-    id: '2090083230317945129',
-    title: 'One photo, one premium poster',
-    excerpt: 'Turn every uploaded photo into a standalone premium poster, never a collage.',
-    prompt: 'Please turn each uploaded photo into a standalone high-end design poster, one image per output with no multi-image collage. Use a 3:4 vertical composition, preserve the subject and important details from the original photo, add an art-directed background and refined typography, and keep the visual system consistent across the series.',
-    image: '/images/prompt-01.png',
-    model: 'GPT Image',
-    category: 'Posters & Visuals',
-    tags: ['poster', 'photo edit', 'series'],
-    creator: { name: 'Community', handle: '@community', avatar: 'CO', color: '#8461d0' },
-    likes: 51,
-    copies: 174,
-    views: 1470,
-    featured: false,
-    status: 'published',
-    ratio: '3:4',
-    createdAt: now - 1000 * 60 * 60 * 150,
-    sourceUrl: 'https://www.meigen.ai/prompt/2090083230317945129'
-  },
-  {
-    id: '2090042212885098527',
-    title: 'Athletic motion campaign storyboard',
-    excerpt: 'A flexible sports visual system for trail running, swimming, or skateboarding.',
-    prompt: '[Sport]: {trail running / swimming / skateboarding / cycling}. Build a premium campaign image system with a strong sense of motion, one hero athlete, crisp directional light, graphic color blocking, intentional negative space for copy, and three supporting detail frames. Keep the subject recognizable and the visual language consistent across every frame.',
-    image: '/images/prompt-02.png',
-    model: 'Seedance',
-    category: 'Videos',
-    tags: ['sports', 'motion', 'campaign'],
-    creator: { name: 'Motion Lab', handle: '@motionlab', avatar: 'ML', color: '#e27d5f' },
-    likes: 66,
-    copies: 141,
-    views: 2080,
-    featured: false,
-    ratio: '16:9',
-    status: 'published',
-    createdAt: now - 1000 * 60 * 60 * 178,
-    sourceUrl: 'https://www.meigen.ai/prompt/2090042212885098527'
-  }
-];
-
-const seedUsers = [
-  { id: 'u_admin', name: 'Ava Chen', username: ADMIN_USERNAME, email: `${ADMIN_USERNAME}@genvexa.local`, role: 'admin', status: 'active', avatar: 'AC', credits: 9999, joinedAt: now - 1000 * 60 * 60 * 24 * 90, favorites: [] },
-  { id: 'u_alexei', name: 'Alexei Sazonow', email: 'alexei@example.com', role: 'creator', status: 'active', avatar: 'AS', credits: 120, joinedAt: now - 1000 * 60 * 60 * 24 * 45, favorites: ['community_4bf39330-56f2-4a44-8e85-c137a7368d7b'] },
-  { id: 'u_mira', name: 'Mira Studio', email: 'mira@example.com', role: 'creator', status: 'active', avatar: 'MS', credits: 80, joinedAt: now - 1000 * 60 * 60 * 24 * 31, favorites: [] },
-  { id: 'u_oliver', name: 'Oliver Park', email: 'oliver@example.com', role: 'member', status: 'active', avatar: 'OP', credits: 25, joinedAt: now - 1000 * 60 * 60 * 24 * 12, favorites: [] },
-  { id: 'u_sana', name: 'Sana Malik', email: 'sana@example.com', role: 'member', status: 'pending', avatar: 'SM', credits: 50, joinedAt: now - 1000 * 60 * 60 * 24 * 3, favorites: [] }
-];
+const SESSION_SECRET = String(process.env.GENVEXA_SESSION_SECRET || crypto.createHash('sha256').update(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}:genvexa-session`).digest('hex'));
+const SESSION_COOKIE = 'genvexa_session';
+const SESSION_MAX_AGE = 60 * 60 * 8;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 3 * 1024 * 1024;
+const ALLOWED_MEDIA_HOSTS = new Set(['images.meigen.ai', 'cdn.faymas.in', 'pbs.twimg.com']);
+const loginFailures = new Map();
+const revokedSessions = new Map();
 
 function load(name, fallback) {
   const file = path.join(dataDir, `${name}.json`);
   if (!fs.existsSync(file)) {
-    try { fs.writeFileSync(file, JSON.stringify(fallback, null, 2)); } catch { /* use the bundled fallback in read-only serverless mode */ }
+    try { fs.writeFileSync(file, JSON.stringify(fallback, null, 2)); } catch { /* bundled fallback */ }
   }
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
 }
 function save(name, value) {
-  try { fs.writeFileSync(path.join(dataDir, `${name}.json`), JSON.stringify(value, null, 2)); } catch { /* Vercel functions are ephemeral; use a managed database for durable writes */ }
+  try { fs.writeFileSync(path.join(dataDir, `${name}.json`), JSON.stringify(value, null, 2)); } catch { /* Vercel filesystem is ephemeral/read-only */ }
 }
-let prompts = load('prompts', seedPrompts);
-let users = load('users', seedUsers);
-let activities = load('activities', [
-  { id: 'a1', type: 'publish', text: 'Alexei Sazonow published a new prompt', promptId: seedPrompts[0].id, time: now - 1000 * 60 * 11 },
-  { id: 'a2', type: 'feature', text: '“Luxury organic matcha packaging concept” was featured', promptId: seedPrompts[6].id, time: now - 1000 * 60 * 47 },
-  { id: 'a3', type: 'signup', text: 'Sana Malik joined the community', time: now - 1000 * 60 * 88 },
-  { id: 'a4', type: 'copy', text: 'A prompt was copied 18 times in the last hour', promptId: seedPrompts[2].id, time: now - 1000 * 60 * 123 }
-]);
-
-function addActivity(type, text, promptId) {
-  activities.unshift({ id: crypto.randomUUID(), type, text, promptId, time: Date.now() });
-  activities = activities.slice(0, 80);
-  save('activities', activities);
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  return `${salt}:${crypto.scryptSync(String(password), salt, 64).toString('hex')}`;
 }
-function publicPrompt(p) {
-  return { ...p, sourceUrl: p.sourceUrl || 'https://www.meigen.ai/' };
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  try {
+    const [salt, hash] = stored.split(':');
+    const actual = crypto.scryptSync(String(password), salt, 64);
+    const expected = Buffer.from(hash, 'hex');
+    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+  } catch { return false; }
 }
-function findPrompt(id) { return prompts.find(p => p.id === id); }
-function findUser(id) { return users.find(u => u.id === id); }
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-function validateImageAsset(image) {
-  if (!image || !String(image).startsWith('data:')) return null;
-  const [header, payload] = String(image).split(',', 2);
-  if (!/^data:image\/(png|jpe?g|webp|gif);base64$/i.test(header || '') || !payload) return 'Please upload a PNG, JPG, GIF, or WebP image.';
+function safeUser(user) {
+  if (!user) return null;
+  const { passwordHash, ...publicUser } = user;
+  return publicUser;
+}
+function getCookies(req) {
+  return String(req.headers.cookie || '').split(';').reduce((all, pair) => {
+    const index = pair.indexOf('=');
+    if (index < 0) return all;
+    const key = pair.slice(0, index).trim();
+    all[key] = decodeURIComponent(pair.slice(index + 1).trim());
+    return all;
+  }, {});
+}
+function signSession(payload) {
+  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64url');
+  return `${encoded}.${signature}`;
+}
+function readSession(req) {
+  const cookies = getCookies(req);
+  const token = cookies[SESSION_COOKIE] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const [encoded, signature] = token.split('.');
+  if (!encoded || !signature) return null;
+  try {
+    const expected = crypto.createHmac('sha256', SESSION_SECRET).update(encoded).digest('base64url');
+    const a = Buffer.from(signature);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    if (!payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    const revokedUntil = revokedSessions.get(payload.jti);
+    if (revokedUntil && revokedUntil > Date.now()) return null;
+    if (revokedUntil) revokedSessions.delete(payload.jti);
+    return payload;
+  } catch { return null; }
+}
+function setSessionCookie(res, token) {
+  const secure = isProduction || process.env.VERCEL ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=${SESSION_MAX_AGE}`);
+}
+function clearSessionCookie(res) {
+  const secure = isProduction || process.env.VERCEL ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=0`);
+}
+function makeSession(user) {
+  const issuedAt = Math.floor(Date.now() / 1000);
+  return signSession({ sub: user.id, role: user.role, iat: issuedAt, exp: issuedAt + SESSION_MAX_AGE, jti: crypto.randomUUID() });
+}
+function findPrompt(id) { return prompts.find(prompt => prompt.id === id); }
+function findUser(id) { return users.find(user => user.id === id); }
+function normalizeModel(value) {
+  const model = String(value || '').trim();
+  const low = model.toLowerCase().replace(/\s/g, '');
+  if (low.includes('nano')) return 'Nano Banana';
+  if (low.includes('gpt') || low.includes('chatgpt')) return 'GPT Image';
+  if (low.includes('seedance')) return 'Seedance';
+  if (low.includes('midjourney')) return 'Midjourney';
+  if (low.includes('gemini')) return 'Gemini';
+  return model || 'GPT Image';
+}
+function cleanTitle(title, prompt = '') {
+  let value = String(title || '').replace(/\s+/g, ' ').trim();
+  const invalid = new Set(['{', '[', ']', '[Main Roles]', 'undefined', 'null', '']);
+  if (invalid.has(value) || value.length < 3 || /^\{?\s*\"?\w+\"?\s*:/.test(value) || value === String(prompt || '').trim()) {
+    value = String(prompt || '').split(/\r?\n/).map(line => line.trim()).find(Boolean) || 'Untitled prompt';
+    value = value.replace(/^(Create image|Create an image|Prompt:|Image prompt:)\s*/i, '');
+  }
+  if (value.length > 96) value = `${value.slice(0, 92).replace(/\s+\S*$/, '')}…`;
+  return value || 'Untitled prompt';
+}
+function mediaUrl(value) {
+  if (!value || typeof value !== 'string' || value.startsWith('/') || value.startsWith('data:')) return value;
+  try {
+    const url = new URL(value);
+    if (ALLOWED_MEDIA_HOSTS.has(url.hostname)) return `/api/media?url=${encodeURIComponent(value)}`;
+  } catch { /* keep malformed external values unchanged for validation/fallback */ }
+  return value;
+}
+function publicPrompt(prompt) {
+  const images = Array.isArray(prompt.images) && prompt.images.length ? prompt.images : (prompt.image ? [prompt.image] : []);
+  return {
+    ...prompt,
+    title: cleanTitle(prompt.title, prompt.prompt),
+    model: normalizeModel(prompt.model),
+    image: mediaUrl(prompt.image || images[0] || '/images/prompt-01.png'),
+    images: images.map(mediaUrl),
+    poster: mediaUrl(prompt.poster || prompt.image || images[0]),
+    video: mediaUrl(prompt.video),
+    tags: Array.isArray(prompt.tags) ? prompt.tags : [],
+    creator: prompt.creator || { name: 'Genvexa Creator', handle: '@creator', avatar: 'GC', color: '#7561d8' }
+  };
+}
+function adminPrompt(prompt) {
+  const item = publicPrompt(prompt);
+  return {
+    id: item.id, title: item.title, excerpt: item.excerpt, image: item.image, poster: item.poster,
+    video: item.video, mediaType: item.mediaType, model: item.model, category: item.category,
+    creator: item.creator, likes: item.likes || 0, copies: item.copies || 0, views: item.views || 0,
+    featured: Boolean(item.featured), status: item.status, ratio: item.ratio, createdAt: item.createdAt,
+    sourceUrl: item.sourceUrl, imageCount: item.images?.length || 0
+  };
+}
+function parsePageParam(value, fallback, maximum, name) {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(String(value))) throw new Error(`${name} must be a non-negative integer`);
+  const parsed = Number(value);
+  if ((name === 'limit' && parsed < 1) || (name !== 'limit' && parsed < 0) || parsed > maximum) throw new Error(`${name} is outside the allowed range`);
+  return parsed;
+}
+function validateDataAsset(value, kind) {
+  if (!value || !String(value).startsWith('data:')) return null;
+  const [header, payload] = String(value).split(',', 2);
+  const isImage = kind === 'image';
+  const pattern = isImage ? /^data:image\/(png|jpe?g|webp|gif);base64$/i : /^data:video\/(mp4|webm|quicktime|ogg);base64$/i;
+  if (!pattern.test(header || '') || !payload) return `Please upload a valid ${isImage ? 'image' : 'video'} file.`;
   try {
     const bytes = Buffer.from(payload, 'base64').length;
-    if (bytes > MAX_IMAGE_BYTES) return 'Image must be 2 MB or smaller.';
-  } catch { return 'The uploaded image could not be read.'; }
+    const max = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+    if (bytes > max) return `${isImage ? 'Image' : 'Video'} must be ${isImage ? '2 MB' : '3 MB'} or smaller.`;
+  } catch { return `The uploaded ${isImage ? 'image' : 'video'} could not be read.`; }
   return null;
 }
-const MAX_VIDEO_BYTES = 3 * 1024 * 1024;
-function validateVideoAsset(video) {
-  if (!video || !String(video).startsWith('data:')) return null;
-  const [header, payload] = String(video).split(',', 2);
-  if (!/^data:video\/(mp4|webm|quicktime|ogg);base64$/i.test(header || '') || !payload) return 'Please upload an MP4, WebM, MOV, or OGG video.';
-  try {
-    const bytes = Buffer.from(payload, 'base64').length;
-    if (bytes > MAX_VIDEO_BYTES) return 'Uploaded video must be 3 MB or smaller. For larger files, paste a hosted video URL.';
-  } catch { return 'The uploaded video could not be read.'; }
-  return null;
-}
-function requireAdmin(req, res, next) {
-  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (token !== `admin_${ADMIN_TOKEN}`) return res.status(401).json({ error: 'Admin authentication required' });
+function requireUser(req, res, next) {
+  const session = readSession(req);
+  const user = session?.sub ? findUser(session.sub) : null;
+  if (!session || !user || user.status !== 'active') return res.status(401).json({ error: 'Sign in is required' });
+  req.user = user;
+  req.session = session;
   return next();
 }
+function requireAdmin(req, res, next) {
+  const session = readSession(req);
+  const user = session?.sub ? findUser(session.sub) : null;
+  if (!session || session.role !== 'admin' || !user || user.role !== 'admin' || user.status !== 'active') return res.status(401).json({ error: 'Admin authentication required' });
+  req.user = user;
+  req.session = session;
+  return next();
+}
+function loginKey(req, loginId) { return `${req.ip || 'unknown'}:${loginId}`; }
+function loginRateLimit(req, loginId) {
+  const key = loginKey(req, loginId);
+  const recent = (loginFailures.get(key) || []).filter(time => time > Date.now() - 10 * 60 * 1000);
+  loginFailures.set(key, recent);
+  return recent.length >= 5;
+}
+function failedLogin(req, loginId) {
+  const key = loginKey(req, loginId);
+  const recent = (loginFailures.get(key) || []).filter(time => time > Date.now() - 10 * 60 * 1000);
+  recent.push(Date.now());
+  loginFailures.set(key, recent);
+}
+function successfulLogin(req, loginId) { loginFailures.delete(loginKey(req, loginId)); }
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'genvexa-gallery-studio' }));
+let prompts = load('prompts', []);
+let users = load('users', [
+  { id: 'u_admin', name: 'Ava Chen', username: ADMIN_USERNAME, email: `${ADMIN_USERNAME}@genvexa.local`, role: 'admin', status: 'active', avatar: 'AC', joinedAt: now, favorites: [] }
+]);
+let activities = load('activities', []);
+if (!prompts.length) prompts = [{ id: 'starter_01', title: 'A quiet editorial still life', excerpt: 'A clean starter prompt for the gallery.', prompt: 'Create a quiet editorial still life with soft daylight and tactile materials.', image: '/images/prompt-01.png', images: ['/images/prompt-01.png'], mediaType: 'image', model: 'GPT Image', category: 'Ads & Product', tags: ['editorial'], creator: { name: 'Genvexa', handle: '@genvexa', avatar: 'GX', color: '#7561d8' }, likes: 0, copies: 0, views: 0, featured: true, status: 'published', ratio: '4:5', createdAt: now, sourceUrl: '/' }];
+prompts = prompts.map(prompt => ({ ...prompt, title: cleanTitle(prompt.title, prompt.prompt), model: normalizeModel(prompt.model), mediaType: prompt.mediaType || (prompt.video ? 'video' : 'image'), images: Array.isArray(prompt.images) && prompt.images.length ? prompt.images : (prompt.image ? [prompt.image] : []), tags: Array.isArray(prompt.tags) ? prompt.tags : [] }));
+const adminUser = users.find(user => user.role === 'admin') || users[0];
+if (adminUser) {
+  adminUser.role = 'admin';
+  adminUser.username = ADMIN_USERNAME;
+  adminUser.email = `${ADMIN_USERNAME}@genvexa.local`;
+  adminUser.status = 'active';
+  if (!adminUser.passwordHash) adminUser.passwordHash = hashPassword(ADMIN_PASSWORD);
+}
 
-app.get('/api/prompts', (req, res) => {
-  const { model = 'All', category = 'All', sort = 'featured', search = '', status = 'published' } = req.query;
-  let result = prompts.filter(p => status === 'all' ? true : p.status === status);
-  if (model !== 'All') {
-    const needle = String(model).toLowerCase().replace(/\s/g, '');
-    result = result.filter(p => p.model.toLowerCase().replace(/\s/g, '').includes(needle));
-  }
-  if (category !== 'All') result = result.filter(p => p.category === category);
-  if (search) {
-    const needle = String(search).toLowerCase();
-    result = result.filter(p => `${p.title} ${p.excerpt} ${p.prompt} ${p.category} ${p.model} ${p.creator.name} ${p.tags.join(' ')}`.toLowerCase().includes(needle));
-  }
-  if (sort === 'newest') result.sort((a, b) => b.createdAt - a.createdAt);
-  else if (sort === 'popular') result.sort((a, b) => (b.likes + b.copies / 2 + b.views / 100) - (a.likes + a.copies / 2 + a.views / 100));
-  else result.sort((a, b) => Number(b.featured) - Number(a.featured) || b.createdAt - a.createdAt);
-  const total = result.length;
-  const hasLimit = req.query.limit !== undefined;
-  const limit = hasLimit ? Math.min(60, Math.max(1, Number(req.query.limit) || 24)) : total;
-  const offset = Math.max(0, Number(req.query.offset) || 0);
-  const page = hasLimit ? result.slice(offset, offset + limit) : result;
-  res.json({ prompts: page.map(publicPrompt), total, offset, limit, hasMore: hasLimit ? offset + page.length < total : false });
+
+const productionCsp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Content-Security-Policy', isProduction || process.env.VERCEL ? productionCsp : "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.meigen.ai https://cdn.faymas.in https://pbs.twimg.com; media-src 'self' https://images.meigen.ai https://cdn.faymas.in blob:; connect-src 'self' ws: http://localhost:*; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  if (req.path.startsWith('/api/')) { res.setHeader('Cache-Control', 'no-store, private'); res.setHeader('Pragma', 'no-cache'); }
+  next();
 });
 
-app.get('/api/prompts/:id', (req, res) => {
-  const prompt = findPrompt(req.params.id);
-  if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
-  prompt.views = (prompt.views || 0) + 1;
-  save('prompts', prompts);
-  res.json({ prompt: publicPrompt(prompt) });
+app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'genvexa-gallery-studio', version: '2.0' }));
+
+app.get('/api/media', async (req, res) => {
+  try {
+    const target = new URL(String(req.query.url || ''));
+    if (!ALLOWED_MEDIA_HOSTS.has(target.hostname)) return res.status(400).json({ error: 'Media host is not allowed' });
+    const headers = { 'User-Agent': 'Googlebot', 'Accept': req.headers.range ? '*/*' : 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8' };
+    if (req.headers.range) headers.Range = req.headers.range;
+    const upstream = await fetch(target, { headers, redirect: 'follow' });
+    if (!upstream.ok || !upstream.body) return res.status(404).type('text/plain').send('Media unavailable');
+    res.status(upstream.status);
+    const contentType = upstream.headers.get('content-type');
+    const length = upstream.headers.get('content-length');
+    const range = upstream.headers.get('content-range');
+    if (contentType) res.setHeader('Content-Type', contentType);
+    if (length) res.setHeader('Content-Length', length);
+    if (range) res.setHeader('Content-Range', range);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch { res.status(400).json({ error: 'Invalid media URL' }); }
 });
 
-app.post('/api/prompts/:id/copy', (req, res) => {
-  const prompt = findPrompt(req.params.id);
-  if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
-  prompt.copies = (prompt.copies || 0) + 1;
-  save('prompts', prompts);
-  addActivity('copy', `A prompt was copied from “${prompt.title}”`, prompt.id);
-  res.json({ ok: true, copies: prompt.copies });
-});
-
-app.post('/api/prompts/:id/like', (req, res) => {
-  const prompt = findPrompt(req.params.id);
-  if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
-  const liked = Boolean(req.body?.liked);
-  const current = Number(prompt.likes || 0);
-  prompt.likes = Math.max(0, liked ? current + 1 : current - 1);
-  save('prompts', prompts);
-  res.json({ ok: true, liked, likes: prompt.likes });
-});
-
-app.post('/api/prompts/:id/favorite', (req, res) => {
-  const prompt = findPrompt(req.params.id);
-  const user = findUser(req.body?.userId);
-  if (!prompt || !user) return res.status(404).json({ error: 'Prompt or user not found' });
-  const favorite = Boolean(req.body?.favorite);
-  user.favorites = user.favorites || [];
-  if (favorite && !user.favorites.includes(prompt.id)) user.favorites.push(prompt.id);
-  if (!favorite) user.favorites = user.favorites.filter(id => id !== prompt.id);
-  save('users', users);
-  res.json({ ok: true, favorite, favorites: user.favorites });
-});
-
-app.post('/api/generations', (req, res) => {
-  const prompt = req.body?.promptId ? findPrompt(req.body.promptId) : null;
-  const image = prompt?.image || '/images/prompt-01.png';
-  const result = { id: crypto.randomUUID(), image, poster: prompt?.poster || image, video: prompt?.video || null, mediaType: prompt?.mediaType || 'image', prompt: req.body?.prompt || prompt?.prompt || '', model: req.body?.model || prompt?.model || 'GPT Image', ratio: req.body?.ratio || prompt?.ratio || '4:5', createdAt: Date.now() };
-  if (prompt) {
-    prompt.copies = (prompt.copies || 0) + 1;
-    save('prompts', prompts);
-  }
-  addActivity('generate', `A ${result.model} creation was generated`, prompt?.id);
-  res.json({ generation: result, creditsRemaining: 24 });
+app.get('/api/auth/session', (req, res) => {
+  const session = readSession(req);
+  const user = session?.sub ? findUser(session.sub) : null;
+  if (!session || !user || user.status !== 'active') return res.status(401).json({ error: 'No active session' });
+  res.json({ user: safeUser(user) });
 });
 
 app.post('/api/auth/login', (req, res) => {
   const loginId = String(req.body?.username || req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   if (!loginId || !password) return res.status(400).json({ error: 'Username/email and password are required' });
-  let user = users.find(u => u.email?.toLowerCase() === loginId || u.username?.toLowerCase() === loginId);
-  const adminLogin = loginId === ADMIN_USERNAME;
-
-  if (adminLogin) {
-    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Invalid admin username or password' });
-    user = user || users.find(u => u.role === 'admin');
-    if (!user) return res.status(500).json({ error: 'Admin account is not configured' });
-    return res.json({ token: `admin_${ADMIN_TOKEN}`, user });
-  }
-  if (user?.role === 'admin') return res.status(401).json({ error: 'Use the admin username to access the admin portal' });
-
-  if (!user) {
-    const localPart = loginId.split('@')[0];
-    const initials = localPart.split(/[._-]/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
-    user = { id: `u_${crypto.randomUUID()}`, name: localPart.replace(/[._-]/g, ' '), username: loginId.includes('@') ? undefined : loginId, email: loginId.includes('@') ? loginId : `${loginId}@genvexa.local`, role: 'member', status: 'active', avatar: initials || 'ME', credits: 25, joinedAt: Date.now(), favorites: [] };
-    users.push(user);
-    save('users', users);
-    addActivity('signup', `${user.name} joined the community`);
-  }
-  res.json({ token: `demo_${user.id}`, user });
+  if (loginRateLimit(req, loginId)) return res.status(429).set('Retry-After', '600').json({ error: 'Too many sign-in attempts. Try again later.' });
+  const user = users.find(item => item.username?.toLowerCase() === loginId || item.email?.toLowerCase() === loginId);
+  const valid = user && user.status === 'active' && (user.role === 'admin' ? loginId === ADMIN_USERNAME && password === ADMIN_PASSWORD : verifyPassword(password, user.passwordHash));
+  if (!valid) { failedLogin(req, loginId); return res.status(401).json({ error: 'Invalid username or password' }); }
+  successfulLogin(req, loginId);
+  setSessionCookie(res, makeSession(user));
+  res.json({ user: safeUser(user) });
 });
 
-app.get('/api/me/:id', (req, res) => {
-  const user = findUser(req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json({ user });
+app.post('/api/auth/register', (req, res) => {
+  const username = String(req.body?.username || '').trim().toLowerCase();
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!/^[a-z0-9_]{3,30}$/.test(username) || !/^\S+@\S+\.\S+$/.test(email) || password.length < 8) return res.status(400).json({ error: 'Use a valid username, email, and password of at least 8 characters.' });
+  if (username === ADMIN_USERNAME || users.some(user => user.username?.toLowerCase() === username || user.email?.toLowerCase() === email)) return res.status(409).json({ error: 'That username or email is already in use.' });
+  const user = { id: `u_${crypto.randomUUID()}`, name: username.replace(/[_-]/g, ' '), username, email, passwordHash: hashPassword(password), role: 'member', status: 'active', avatar: username.slice(0, 2).toUpperCase(), joinedAt: Date.now(), favorites: [] };
+  users.push(user); save('users', users); addActivity('signup', `${user.name} joined the community`);
+  setSessionCookie(res, makeSession(user));
+  res.status(201).json({ user: safeUser(user) });
 });
 
-const createPromptHandler = (req, res) => {
-  const body = req.body || {};
-  if (!body.prompt || !body.title) return res.status(400).json({ error: 'Title and prompt are required' });
-  const imageError = validateImageAsset(body.image);
-  if (imageError) return res.status(413).json({ error: imageError });
-  const videoError = validateVideoAsset(body.video);
-  if (videoError) return res.status(413).json({ error: videoError });
-  const item = {
-    id: `community_${crypto.randomUUID()}`,
-    title: body.title,
-    excerpt: body.excerpt || body.prompt.slice(0, 100),
-    prompt: body.prompt,
-    image: body.image || '/images/prompt-01.png',
-    poster: body.poster || body.image || '/images/prompt-01.png',
-    video: body.video || null,
-    mediaType: body.mediaType || (body.video ? 'video' : 'image'),
-    model: body.model || 'GPT Image',
-    category: body.category || 'Ads & Product',
-    tags: Array.isArray(body.tags) ? body.tags : String(body.tags || '').split(',').map(x => x.trim()).filter(Boolean),
-    creator: body.creator || { name: 'You', handle: '@you', avatar: 'YO', color: '#7561d8' },
-    likes: 0,
-    copies: 0,
-    views: 0,
-    featured: false,
-    status: body.status || 'pending',
-    ratio: body.ratio || '4:5',
-    createdAt: Date.now(),
-    sourceUrl: body.sourceUrl || 'https://www.meigen.ai/'
-  };
-  prompts.unshift(item);
-  save('prompts', prompts);
-  addActivity('publish', `${item.creator.name} submitted “${item.title}” for review`, item.id);
-  res.status(201).json({ prompt: publicPrompt(item) });
-};
+app.post('/api/auth/logout', (req, res) => { const session = readSession(req); if (session?.jti) revokedSessions.set(session.jti, session.exp * 1000); clearSessionCookie(res); res.status(204).end(); });
 
-app.post('/api/prompts', createPromptHandler);
-
-// Admin endpoints require the exact admin credentials and a short-lived browser session token.
-app.use('/api/admin', requireAdmin);
-app.post('/api/admin/prompts', (req, res) => createPromptHandler(req, res));
-app.get('/api/admin/stats', (_req, res) => {
-  const published = prompts.filter(p => p.status === 'published');
-  const pending = prompts.filter(p => p.status === 'pending');
-  const totalCopies = prompts.reduce((sum, p) => sum + Number(p.copies || 0), 0);
-  res.json({ stats: { prompts: published.length, users: users.length, pending: pending.length, copies: totalCopies, views: prompts.reduce((sum, p) => sum + Number(p.views || 0), 0), featured: prompts.filter(p => p.featured).length } });
+app.get('/api/prompts', (req, res) => {
+  try {
+    const model = String(req.query.model || 'All');
+    const category = String(req.query.category || 'All');
+    const sort = String(req.query.sort || 'featured');
+    const search = String(req.query.search || '').trim();
+    if (search.length > 100) return res.status(400).json({ error: 'Search query is too long' });
+    const limit = parsePageParam(req.query.limit, 28, 60, 'limit');
+    const offset = parsePageParam(req.query.offset, 0, 1000000, 'offset');
+    let result = prompts.filter(prompt => prompt.status === 'published');
+    if (model !== 'All') result = result.filter(prompt => normalizeModel(prompt.model).toLowerCase().replace(/\s/g, '').includes(model.toLowerCase().replace(/\s/g, '')));
+    if (category !== 'All') result = result.filter(prompt => prompt.category === category);
+    if (search) { const needle = search.toLowerCase(); result = result.filter(prompt => `${prompt.title} ${prompt.excerpt} ${prompt.prompt} ${prompt.category} ${prompt.model} ${prompt.creator?.name || ''} ${(prompt.tags || []).join(' ')}`.toLowerCase().includes(needle)); }
+    if (sort === 'newest') result.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    else if (sort === 'popular') result.sort((a, b) => (Number(b.likes || 0) + Number(b.copies || 0) / 2 + Number(b.views || 0) / 100) - (Number(a.likes || 0) + Number(a.copies || 0) / 2 + Number(a.views || 0) / 100));
+    else result.sort((a, b) => Number(b.featured) - Number(a.featured) || Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    const total = result.length;
+    const page = result.slice(offset, offset + limit);
+    res.json({ prompts: page.map(publicPrompt), total, offset, limit, hasMore: offset + page.length < total });
+  } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.get('/api/admin/prompts', (req, res) => {
-  const q = String(req.query.search || '').toLowerCase();
-  const status = String(req.query.status || 'all');
-  let result = prompts.slice();
-  if (status !== 'all') result = result.filter(p => p.status === status);
-  if (q) result = result.filter(p => `${p.title} ${p.creator.name} ${p.model} ${p.category}`.toLowerCase().includes(q));
-  result.sort((a, b) => b.createdAt - a.createdAt);
-  res.json({ prompts: result.map(publicPrompt) });
-});
-
-app.patch('/api/admin/prompts/:id', (req, res) => {
+app.get('/api/prompts/:id', (req, res) => {
   const prompt = findPrompt(req.params.id);
-  if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
-  const allowed = ['status', 'featured', 'title', 'category', 'model'];
-  allowed.forEach(key => { if (req.body && req.body[key] !== undefined) prompt[key] = req.body[key]; });
-  save('prompts', prompts);
-  if (req.body?.status === 'published') addActivity('approve', `“${prompt.title}” was approved and published`, prompt.id);
-  if (req.body?.featured === true) addActivity('feature', `“${prompt.title}” was featured`, prompt.id);
+  if (!prompt || prompt.status !== 'published') return res.status(404).json({ error: 'Prompt not found' });
+  prompt.views = Number(prompt.views || 0) + 1; save('prompts', prompts);
   res.json({ prompt: publicPrompt(prompt) });
 });
 
-app.delete('/api/admin/prompts/:id', (req, res) => {
-  const index = prompts.findIndex(p => p.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Prompt not found' });
-  const [removed] = prompts.splice(index, 1);
-  save('prompts', prompts);
-  addActivity('delete', `“${removed.title}” was removed from the gallery`, removed.id);
-  res.json({ ok: true });
+app.post('/api/prompts/:id/copy', requireUser, (req, res) => {
+  const prompt = findPrompt(req.params.id);
+  if (!prompt || prompt.status !== 'published') return res.status(404).json({ error: 'Prompt not found' });
+  prompt.copies = Number(prompt.copies || 0) + 1; save('prompts', prompts); addActivity('copy', `${req.user.name} copied “${cleanTitle(prompt.title, prompt.prompt)}”`, prompt.id);
+  res.json({ ok: true, copies: prompt.copies });
 });
 
-app.get('/api/admin/users', (_req, res) => res.json({ users }));
-app.patch('/api/admin/users/:id', (req, res) => {
-  const user = findUser(req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  if (req.body?.status) user.status = req.body.status;
-  if (req.body?.role) user.role = req.body.role;
-  save('users', users);
-  res.json({ user });
+app.post('/api/prompts/:id/like', requireUser, (req, res) => {
+  const prompt = findPrompt(req.params.id);
+  if (!prompt || prompt.status !== 'published') return res.status(404).json({ error: 'Prompt not found' });
+  const liked = Boolean(req.body?.liked); prompt.likes = Math.max(0, Number(prompt.likes || 0) + (liked ? 1 : -1)); save('prompts', prompts);
+  res.json({ ok: true, liked, likes: prompt.likes });
 });
-app.get('/api/admin/activity', (_req, res) => res.json({ activities }));
+
+app.post('/api/prompts/:id/favorite', requireUser, (req, res) => {
+  const prompt = findPrompt(req.params.id);
+  if (!prompt || prompt.status !== 'published') return res.status(404).json({ error: 'Prompt not found' });
+  const favorite = Boolean(req.body?.favorite); req.user.favorites = Array.isArray(req.user.favorites) ? req.user.favorites : [];
+  if (favorite && !req.user.favorites.includes(prompt.id)) req.user.favorites.push(prompt.id);
+  if (!favorite) req.user.favorites = req.user.favorites.filter(id => id !== prompt.id);
+  save('users', users); res.json({ ok: true, favorite, favorites: req.user.favorites });
+});
+
+function createPromptHandler(req, res) {
+  const body = req.body || {};
+  const title = String(body.title || '').trim();
+  const promptText = String(body.prompt || '').trim();
+  if (!title || title.length > 120 || !promptText || promptText.length > 20000) return res.status(400).json({ error: 'Title and prompt are required and must be within the allowed length.' });
+  const imageError = validateDataAsset(body.image, 'image');
+  const videoError = validateDataAsset(body.video, 'video');
+  if (imageError || videoError) return res.status(413).json({ error: imageError || videoError });
+  const creator = req.user?.role === 'admin' && body.creator ? body.creator : { name: req.user.name, handle: req.user.username ? `@${req.user.username}` : '@member', avatar: req.user.avatar || 'ME', color: '#7561d8' };
+  const item = { id: `community_${crypto.randomUUID()}`, title: cleanTitle(title, promptText), excerpt: promptText.slice(0, 150), prompt: promptText, image: body.image || '/images/prompt-01.png', images: body.image ? [body.image] : ['/images/prompt-01.png'], poster: body.poster || body.image || '/images/prompt-01.png', video: body.video || null, mediaType: body.mediaType || (body.video ? 'video' : 'image'), model: normalizeModel(body.model), category: body.category || 'Ads & Product', tags: Array.isArray(body.tags) ? body.tags.slice(0, 12) : [], creator, likes: 0, copies: 0, views: 0, featured: false, status: req.user.role === 'admin' && body.status === 'published' ? 'published' : 'pending', ratio: body.ratio || '4:5', createdAt: Date.now(), sourceUrl: body.sourceUrl || '/' };
+  prompts.unshift(item); save('prompts', prompts); addActivity('publish', `${creator.name} submitted “${item.title}”`, item.id);
+  res.status(201).json({ prompt: publicPrompt(item) });
+}
+app.post('/api/prompts', requireUser, createPromptHandler);
+
+app.use('/api/admin', (req, res, next) => req.method === 'OPTIONS' ? res.status(204).end() : next());
+app.use('/api/admin', requireAdmin);
+app.post('/api/admin/prompts', createPromptHandler);
+app.get('/api/admin/stats', (_req, res) => {
+  const published = prompts.filter(prompt => prompt.status === 'published');
+  res.json({ stats: { prompts: published.length, users: users.length, creators: users.filter(user => user.role === 'creator' && user.status === 'active').length, pending: prompts.filter(prompt => prompt.status === 'pending').length, copies: prompts.reduce((sum, prompt) => sum + Number(prompt.copies || 0), 0), views: prompts.reduce((sum, prompt) => sum + Number(prompt.views || 0), 0), featured: prompts.filter(prompt => prompt.featured).length } });
+});
+app.get('/api/admin/prompts', (req, res) => {
+  try {
+    const q = String(req.query.search || '').trim().toLowerCase();
+    const status = String(req.query.status || 'all');
+    const limit = parsePageParam(req.query.limit, 25, 50, 'limit');
+    const offset = parsePageParam(req.query.offset, 0, 1000000, 'offset');
+    let result = prompts.slice();
+    if (status !== 'all') result = result.filter(prompt => prompt.status === status);
+    if (q.length > 100) return res.status(400).json({ error: 'Search query is too long' });
+    if (q) result = result.filter(prompt => `${prompt.title} ${prompt.creator?.name || ''} ${prompt.model} ${prompt.category}`.toLowerCase().includes(q));
+    result.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    const total = result.length; const page = result.slice(offset, offset + limit);
+    res.json({ prompts: page.map(adminPrompt), total, offset, limit, hasMore: offset + page.length < total });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.patch('/api/admin/prompts/:id', (req, res) => {
+  const prompt = findPrompt(req.params.id); if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+  ['status', 'featured', 'title', 'category', 'model'].forEach(key => { if (req.body?.[key] !== undefined) prompt[key] = key === 'model' ? normalizeModel(req.body[key]) : req.body[key]; });
+  save('prompts', prompts);
+  if (req.body?.status === 'published') addActivity('approve', `“${cleanTitle(prompt.title, prompt.prompt)}” was approved`, prompt.id);
+  if (req.body?.featured === true) addActivity('feature', `“${cleanTitle(prompt.title, prompt.prompt)}” was featured`, prompt.id);
+  res.json({ prompt: adminPrompt(prompt) });
+});
+app.delete('/api/admin/prompts/:id', (req, res) => {
+  const index = prompts.findIndex(prompt => prompt.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'Prompt not found' });
+  const [removed] = prompts.splice(index, 1); save('prompts', prompts); addActivity('delete', `“${cleanTitle(removed.title, removed.prompt)}” was removed`, removed.id); res.json({ ok: true });
+});
+app.get('/api/admin/users', (_req, res) => res.json({ users: users.map(safeUser) }));
+app.patch('/api/admin/users/:id', (req, res) => {
+  const user = findUser(req.params.id); if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.id === adminUser?.id && req.body?.status === 'suspended') return res.status(400).json({ error: 'The primary admin cannot be suspended.' });
+  if (req.body?.status) user.status = String(req.body.status);
+  if (req.body?.role && ['member', 'creator', 'admin'].includes(req.body.role)) user.role = req.body.role;
+  save('users', users); res.json({ user: safeUser(user) });
+});
+app.delete('/api/admin/users/:id', (req, res) => {
+  const index = users.findIndex(user => user.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'User not found' });
+  if (users[index].role === 'admin') return res.status(400).json({ error: 'The primary admin cannot be deleted.' });
+  const [removed] = users.splice(index, 1); save('users', users); addActivity('delete', `${removed.name} was removed from the community`); res.json({ ok: true });
+});
+app.get('/api/admin/activity', (req, res) => {
+  try {
+    const limit = parsePageParam(req.query.limit, 20, 50, 'limit'); const offset = parsePageParam(req.query.offset, 0, 1000000, 'offset');
+    const total = activities.length; const page = activities.slice(offset, offset + limit); res.json({ activities: page, total, offset, limit, hasMore: offset + page.length < total });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found' }));
+
+function addActivity(type, text, promptId) {
+  activities.unshift({ id: crypto.randomUUID(), type, text, promptId, time: Date.now() });
+  activities = activities.slice(0, 100); save('activities', activities);
+}
+
+app.use((error, _req, res, _next) => {
+  if (error?.type === 'entity.parse.failed' || error instanceof SyntaxError) return res.status(400).json({ error: 'Invalid JSON request body' });
+  console.error(error);
+  return res.status(500).json({ error: 'Internal server error' });
+});
 
 export default app;
 
-// Vercel imports the Express app as a serverless function. Local development and
-// self-hosted production keep using the same file as a normal HTTP server.
 if (!process.env.VERCEL) {
   if (isProduction) {
     app.use(express.static(path.join(__dirname, 'dist')));
     app.use((req, res, next) => {
-      if (req.method === 'GET' && req.accepts('html')) return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-      return next();
+      if (req.method !== 'GET' || !req.accepts('html')) return next();
+      const knownPage = req.path === '/' || /^\/(?:app|terms|privacy-policy|refund-policy)$/.test(req.path) || /^\/prompt\/[^/]+$/.test(req.path) || req.path === '/admin';
+      if (!knownPage) return res.status(404).sendFile(path.join(publicDir, '404.html'));
+      return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
     app.listen(port, '0.0.0.0', () => console.log(`Genvexa Gallery Studio running at http://0.0.0.0:${port}`));
   } else {
     const { createServer } = await import('vite');
     const vite = await createServer({ server: { middlewareMode: true, host: true, allowedHosts: true }, appType: 'spa' });
-    app.use(vite.middlewares);
-    app.listen(port, '0.0.0.0', () => console.log(`Genvexa Gallery Studio running at http://0.0.0.0:${port}`));
+    app.use(vite.middlewares); app.listen(port, '0.0.0.0', () => console.log(`Genvexa Gallery Studio running at http://0.0.0.0:${port}`));
   }
 }

@@ -1,10 +1,15 @@
 [
   {
-    "id": "7d6c1835-c225-41d5-ba4b-c42535970309",
-    "type": "generate",
-    "text": "A Seedance creation was generated",
-    "promptId": "2078162454744346803",
-    "time": 1787423974519
+    "id": "affe70a7-18df-4fe4-87ce-ae0d60b22b15",
+    "type": "delete",
+    "text": "qacheck was removed from the community",
+    "time": 1787447160260
+  },
+  {
+    "id": "13336ba3-deea-42c0-9f4c-d798676f4e05",
+    "type": "signup",
+    "text": "qacheck joined the community",
+    "time": 1787447152662
   },
   {
     "id": "a1",
