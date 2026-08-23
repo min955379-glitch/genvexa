@@ -28,7 +28,7 @@ The admin portal includes overview metrics, moderation, prompt search/filtering,
 - Prompt detail modal with source link, copy-to-clipboard, likes, favorites, and related prompts
 - History and Favorites views stored per browser account
 - Community publish flow with pending-review moderation status
-- Email sign-in demo and admin access state
+- Secure email sign-in, registration, cookie sessions, and admin access state
 - JSON-backed persistence in `data/prompts.json`, `data/users.json`, and `data/activities.json`
 - API routes for prompts, likes, copies, favorites, auth, users, moderation, media, and stats
 
