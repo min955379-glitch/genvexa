@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
+import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,9 +21,15 @@ try { fs.mkdirSync(dataDir, { recursive: true }); } catch { /* read-only serverl
 try { fs.mkdirSync(path.join(publicDir, 'images'), { recursive: true }); } catch { /* static files are bundled */ }
 
 const now = Date.now();
-const ADMIN_USERNAME = String(process.env.GENVEXA_ADMIN_USERNAME || 'usertestpro').trim().toLowerCase();
-const ADMIN_PASSWORD = String(process.env.GENVEXA_ADMIN_PASSWORD || 'pass123pro');
-const SESSION_SECRET = String(process.env.GENVEXA_SESSION_SECRET || crypto.createHash('sha256').update(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}:genvexa-session`).digest('hex'));
+const rawSupabaseUrl = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_URL = rawSupabaseUrl && rawSupabaseUrl.startsWith('http') ? rawSupabaseUrl : rawSupabaseUrl ? `https://${rawSupabaseUrl}.supabase.co` : '';
+const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+let supabaseAdmin = null;
+try { if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } }); } catch (error) { console.error('Supabase server client is not configured:', error.message); }
+const ADMIN_USERNAME = String(process.env.GENVEXA_ADMIN_USERNAME || '').trim().toLowerCase();
+const ADMIN_PASSWORD = String(process.env.GENVEXA_ADMIN_PASSWORD || '');
+const LEGACY_AUTH_ENABLED = Boolean(!supabaseAdmin && process.env.ENABLE_LEGACY_AUTH === 'true' && ADMIN_USERNAME && ADMIN_PASSWORD);
+const SESSION_SECRET = String(process.env.GENVEXA_SESSION_SECRET || (LEGACY_AUTH_ENABLED ? crypto.randomBytes(32).toString('hex') : 'supabase-managed-session'));
 const SESSION_COOKIE = 'genvexa_session';
 const SESSION_MAX_AGE = 60 * 60 * 8;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -103,6 +110,7 @@ function makeSession(user) {
   const issuedAt = Math.floor(Date.now() / 1000);
   return signSession({ sub: user.id, role: user.role, iat: issuedAt, exp: issuedAt + SESSION_MAX_AGE, jti: crypto.randomUUID() });
 }
+function initials(name = '') { return String(name).split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase() || 'GX'; }
 function findPrompt(id) { return prompts.find(prompt => prompt.id === id); }
 function findUser(id) { return users.find(user => user.id === id); }
 function normalizeModel(value) {
@@ -177,21 +185,60 @@ function validateDataAsset(value, kind) {
   } catch { return `The uploaded ${isImage ? 'image' : 'video'} could not be read.`; }
   return null;
 }
-function requireUser(req, res, next) {
-  const session = readSession(req);
-  const user = session?.sub ? findUser(session.sub) : null;
-  if (!session || !user || user.status !== 'active') return res.status(401).json({ error: 'Sign in is required' });
-  req.user = user;
-  req.session = session;
-  return next();
+function bearerToken(req) { return String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim(); }
+function profileUser(authUser, profile = {}) {
+  const email = authUser.email || profile.email || '';
+  const name = profile.full_name || authUser.user_metadata?.full_name || email.split('@')[0] || 'Genvexa user';
+  return { id: authUser.id, name, username: profile.username || authUser.user_metadata?.username || email.split('@')[0], email, avatar: profile.avatar_url || initials(name), avatarUrl: profile.avatar_url || null, role: profile.role || 'user', status: profile.status || 'active', joinedAt: profile.created_at || authUser.created_at, updatedAt: profile.updated_at, lastSignInAt: profile.last_sign_in_at || authUser.last_sign_in_at, emailVerifiedAt: profile.email_verified_at || authUser.email_confirmed_at || null, authProvider: profile.auth_provider || authUser.app_metadata?.provider || 'email', favorites: [] };
 }
-function requireAdmin(req, res, next) {
-  const session = readSession(req);
-  const user = session?.sub ? findUser(session.sub) : null;
+async function getSupabaseContext(req) {
+  if (!supabaseAdmin) return null;
+  const token = bearerToken(req);
+  if (!token) return null;
+  const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  if (authError || !authUser) return null;
+  let { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id,full_name,username,email,avatar_url,role,status,created_at,updated_at,last_sign_in_at,email_verified_at,auth_provider').eq('id', authUser.id).maybeSingle();
+  if (profileError) return { authUser, profile: null, profileError };
+  if (!profile) {
+    const { data: created, error: createError } = await supabaseAdmin.from('profiles').insert({ id: authUser.id, full_name: authUser.user_metadata?.full_name || '', username: authUser.user_metadata?.username || (authUser.email || '').split('@')[0], email: authUser.email || '', auth_provider: authUser.app_metadata?.provider || 'email', email_verified_at: authUser.email_confirmed_at || null }).select().single();
+    if (!createError) return { authUser, profile: created };
+  }
+  const signInUpdate = {};
+  if (authUser.email_confirmed_at && !profile?.email_verified_at) signInUpdate.email_verified_at = authUser.email_confirmed_at;
+  if (authUser.last_sign_in_at && profile?.last_sign_in_at !== authUser.last_sign_in_at) signInUpdate.last_sign_in_at = authUser.last_sign_in_at;
+  if (profile && Object.keys(signInUpdate).length) {
+    const { data: updatedProfile } = await supabaseAdmin.from('profiles').update(signInUpdate).eq('id', authUser.id).select().single();
+    profile = updatedProfile || { ...profile, ...signInUpdate };
+  }
+  return { authUser, profile };
+}
+async function requireUser(req, res, next) {
+  if (supabaseAdmin) {
+    const context = await getSupabaseContext(req);
+    if (context?.profileError) return res.status(503).json({ error: 'Account data is not configured. Run the Supabase schema first.' });
+    if (!context) return res.status(401).json({ error: 'Sign in is required' });
+    const user = profileUser(context.authUser, context.profile);
+    if (user.status !== 'active') return res.status(403).json({ error: 'This account is not active.' });
+    req.user = user; req.authUser = context.authUser; return next();
+  }
+  if (!LEGACY_AUTH_ENABLED) return res.status(503).json({ error: 'Authentication is not configured for this deployment.' });
+  const session = readSession(req); const user = session?.sub ? findUser(session.sub) : null;
+  if (!session || !user || user.status !== 'active') return res.status(401).json({ error: 'Sign in is required' });
+  req.user = user; req.session = session; return next();
+}
+async function requireAdmin(req, res, next) {
+  if (supabaseAdmin) {
+    const context = await getSupabaseContext(req);
+    if (context?.profileError) return res.status(503).json({ error: 'Account data is not configured. Run the Supabase schema first.' });
+    if (!context) return res.status(401).json({ error: 'Admin authentication required' });
+    const user = profileUser(context.authUser, context.profile);
+    if (user.role !== 'admin' || user.status !== 'active') return res.status(403).json({ error: 'Admin access is required.' });
+    req.user = user; req.authUser = context.authUser; return next();
+  }
+  if (!LEGACY_AUTH_ENABLED) return res.status(503).json({ error: 'Authentication is not configured for this deployment.' });
+  const session = readSession(req); const user = session?.sub ? findUser(session.sub) : null;
   if (!session || session.role !== 'admin' || !user || user.role !== 'admin' || user.status !== 'active') return res.status(401).json({ error: 'Admin authentication required' });
-  req.user = user;
-  req.session = session;
-  return next();
+  req.user = user; req.session = session; return next();
 }
 function loginKey(req, loginId) { return `${req.ip || 'unknown'}:${loginId}`; }
 function loginRateLimit(req, loginId) {
@@ -215,7 +262,7 @@ let users = load('users', [
 let activities = load('activities', []);
 if (!prompts.length) prompts = [{ id: 'starter_01', title: 'A quiet editorial still life', excerpt: 'A clean starter prompt for the gallery.', prompt: 'Create a quiet editorial still life with soft daylight and tactile materials.', image: '/images/prompt-01.png', images: ['/images/prompt-01.png'], mediaType: 'image', model: 'GPT Image', category: 'Ads & Product', tags: ['editorial'], creator: { name: 'Genvexa', handle: '@genvexa', avatar: 'GX', color: '#7561d8' }, likes: 0, copies: 0, views: 0, featured: true, status: 'published', ratio: '4:5', createdAt: now, sourceUrl: '/' }];
 prompts = prompts.map(prompt => ({ ...prompt, title: cleanTitle(prompt.title, prompt.prompt), model: normalizeModel(prompt.model), mediaType: prompt.mediaType || (prompt.video ? 'video' : 'image'), images: Array.isArray(prompt.images) && prompt.images.length ? prompt.images : (prompt.image ? [prompt.image] : []), tags: Array.isArray(prompt.tags) ? prompt.tags : [] }));
-const adminUser = users.find(user => user.role === 'admin') || users[0];
+const adminUser = LEGACY_AUTH_ENABLED ? (users.find(user => user.role === 'admin') || users[0]) : null;
 if (adminUser) {
   adminUser.role = 'admin';
   adminUser.username = ADMIN_USERNAME;
@@ -260,14 +307,24 @@ app.get('/api/media', async (req, res) => {
   } catch { res.status(400).json({ error: 'Invalid media URL' }); }
 });
 
-app.get('/api/auth/session', (req, res) => {
-  const session = readSession(req);
-  const user = session?.sub ? findUser(session.sub) : null;
+app.get('/api/auth/session', async (req, res) => {
+  if (supabaseAdmin) {
+    const context = await getSupabaseContext(req);
+    if (context?.profileError) return res.status(503).json({ error: 'Account data is not configured. Run the Supabase schema first.' });
+    if (!context) return res.status(401).json({ error: 'No active session' });
+    const user = profileUser(context.authUser, context.profile);
+    if (user.status !== 'active') return res.status(403).json({ error: 'This account is not active.' });
+    return res.json({ user });
+  }
+  if (!LEGACY_AUTH_ENABLED) return res.status(503).json({ error: 'Authentication is not configured for this deployment.' });
+  const session = readSession(req); const user = session?.sub ? findUser(session.sub) : null;
   if (!session || !user || user.status !== 'active') return res.status(401).json({ error: 'No active session' });
-  res.json({ user: safeUser(user) });
+  return res.json({ user: safeUser(user) });
 });
 
 app.post('/api/auth/login', (req, res) => {
+  if (supabaseAdmin) return res.status(400).json({ error: 'Use the Supabase Auth client for sign in.' });
+  if (!LEGACY_AUTH_ENABLED) return res.status(503).json({ error: 'Authentication is not configured for this deployment.' });
   const loginId = String(req.body?.username || req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   if (!loginId || !password) return res.status(400).json({ error: 'Username/email and password are required' });
@@ -275,24 +332,22 @@ app.post('/api/auth/login', (req, res) => {
   const user = users.find(item => item.username?.toLowerCase() === loginId || item.email?.toLowerCase() === loginId);
   const valid = user && user.status === 'active' && (user.role === 'admin' ? loginId === ADMIN_USERNAME && password === ADMIN_PASSWORD : verifyPassword(password, user.passwordHash));
   if (!valid) { failedLogin(req, loginId); return res.status(401).json({ error: 'Invalid username or password' }); }
-  successfulLogin(req, loginId);
-  setSessionCookie(res, makeSession(user));
-  res.json({ user: safeUser(user) });
+  successfulLogin(req, loginId); setSessionCookie(res, makeSession(user)); return res.json({ user: safeUser(user) });
 });
 
 app.post('/api/auth/register', (req, res) => {
+  if (supabaseAdmin) return res.status(400).json({ error: 'Use the Supabase Auth client for registration.' });
+  if (!LEGACY_AUTH_ENABLED) return res.status(503).json({ error: 'Authentication is not configured for this deployment.' });
   const username = String(req.body?.username || '').trim().toLowerCase();
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   if (!/^[a-z0-9_]{3,30}$/.test(username) || !/^\S+@\S+\.\S+$/.test(email) || password.length < 8) return res.status(400).json({ error: 'Use a valid username, email, and password of at least 8 characters.' });
   if (username === ADMIN_USERNAME || users.some(user => user.username?.toLowerCase() === username || user.email?.toLowerCase() === email)) return res.status(409).json({ error: 'That username or email is already in use.' });
   const user = { id: `u_${crypto.randomUUID()}`, name: username.replace(/[_-]/g, ' '), username, email, passwordHash: hashPassword(password), role: 'member', status: 'active', avatar: username.slice(0, 2).toUpperCase(), joinedAt: Date.now(), favorites: [] };
-  users.push(user); save('users', users); addActivity('signup', `${user.name} joined the community`);
-  setSessionCookie(res, makeSession(user));
-  res.status(201).json({ user: safeUser(user) });
+  users.push(user); save('users', users); addActivity('signup', `${user.name} joined the community`); setSessionCookie(res, makeSession(user)); return res.status(201).json({ user: safeUser(user) });
 });
 
-app.post('/api/auth/logout', (req, res) => { const session = readSession(req); if (session?.jti) revokedSessions.set(session.jti, session.exp * 1000); clearSessionCookie(res); res.status(204).end(); });
+app.post('/api/auth/logout', (req, res) => { if (supabaseAdmin) return res.status(204).end(); const session = readSession(req); if (session?.jti) revokedSessions.set(session.jti, session.exp * 1000); clearSessionCookie(res); res.status(204).end(); });
 
 app.get('/api/prompts', (req, res) => {
   try {
@@ -362,17 +417,41 @@ function createPromptHandler(req, res) {
 app.post('/api/prompts', requireUser, createPromptHandler);
 
 app.use('/api/admin', (req, res, next) => req.method === 'OPTIONS' ? res.status(204).end() : next());
+app.use('/api/admin', (req, res, next) => req.method === 'OPTIONS' ? res.status(204).end() : next());
 app.use('/api/admin', requireAdmin);
 app.post('/api/admin/prompts', createPromptHandler);
 app.post('/api/admin/save', (req, res) => {
   const deletedPromptIds = Array.isArray(req.body?.deletedPromptIds) ? req.body.deletedPromptIds : [];
-  if (deletedPromptIds.length) prompts = prompts.filter(prompt => !deletedPromptIds.includes(prompt.id));
+  if (!supabaseAdmin && deletedPromptIds.length) prompts = prompts.filter(prompt => !deletedPromptIds.includes(prompt.id));
   save('prompts', prompts); save('users', users); save('activities', activities);
   res.json({ ok: true, savedAt: new Date().toISOString(), deleted: deletedPromptIds.length });
 });
-app.get('/api/admin/stats', (_req, res) => {
-  const published = prompts.filter(prompt => prompt.status === 'published');
-  res.json({ stats: { prompts: published.length, users: users.length, creators: users.filter(user => user.role === 'creator' && user.status === 'active').length, pending: prompts.filter(prompt => prompt.status === 'pending').length, copies: prompts.reduce((sum, prompt) => sum + Number(prompt.copies || 0), 0), views: prompts.reduce((sum, prompt) => sum + Number(prompt.views || 0), 0), featured: prompts.filter(prompt => prompt.featured).length } });
+async function supabaseCount(queryBuilder) {
+  const { count, error } = await queryBuilder;
+  if (error) throw error;
+  return Number(count || 0);
+}
+async function writeAudit(action, actorId, targetUserId, metadata = {}, success = true) {
+  if (!supabaseAdmin) return;
+  await supabaseAdmin.from('admin_audit_log').insert({ actor_id: actorId, action, target_user_id: targetUserId || null, metadata, success });
+}
+app.get('/api/admin/stats', async (_req, res) => {
+  try {
+    if (supabaseAdmin) {
+      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const [usersCount, verifiedCount, unverifiedCount, newUsersCount, creatorsCount] = await Promise.all([
+        supabaseCount(supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true })),
+        supabaseCount(supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).not('email_verified_at', 'is', null)),
+        supabaseCount(supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).is('email_verified_at', null)),
+        supabaseCount(supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', monthAgo)),
+        supabaseCount(supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'creator').eq('status', 'active'))
+      ]);
+      const published = prompts.filter(prompt => prompt.status === 'published');
+      return res.json({ stats: { prompts: published.length, users: usersCount, creators: creatorsCount, verifiedUsers: verifiedCount, unverifiedUsers: unverifiedCount, newUsers: newUsersCount, pending: prompts.filter(prompt => prompt.status === 'pending').length, copies: prompts.reduce((sum, prompt) => sum + Number(prompt.copies || 0), 0), views: prompts.reduce((sum, prompt) => sum + Number(prompt.views || 0), 0), featured: prompts.filter(prompt => prompt.featured).length } });
+    }
+    const published = prompts.filter(prompt => prompt.status === 'published');
+    return res.json({ stats: { prompts: published.length, users: users.length, creators: users.filter(user => user.role === 'creator' && user.status === 'active').length, pending: prompts.filter(prompt => prompt.status === 'pending').length, copies: prompts.reduce((sum, prompt) => sum + Number(prompt.copies || 0), 0), views: prompts.reduce((sum, prompt) => sum + Number(prompt.views || 0), 0), featured: prompts.filter(prompt => prompt.featured).length } });
+  } catch (error) { return res.status(500).json({ error: 'Unable to load admin statistics.' }); }
 });
 app.get('/api/admin/prompts', (req, res) => {
   try {
@@ -401,24 +480,78 @@ app.delete('/api/admin/prompts/:id', (req, res) => {
   const index = prompts.findIndex(prompt => prompt.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'Prompt not found' });
   const [removed] = prompts.splice(index, 1); save('prompts', prompts); addActivity('delete', `“${cleanTitle(removed.title, removed.prompt)}” was removed`, removed.id); res.json({ ok: true });
 });
-app.get('/api/admin/users', (_req, res) => res.json({ users: users.map(safeUser) }));
-app.patch('/api/admin/users/:id', (req, res) => {
-  const user = findUser(req.params.id); if (!user) return res.status(404).json({ error: 'User not found' });
-  if (user.id === adminUser?.id && req.body?.status === 'suspended') return res.status(400).json({ error: 'The primary admin cannot be suspended.' });
-  if (req.body?.status) user.status = String(req.body.status);
-  if (req.body?.role && ['member', 'creator', 'admin'].includes(req.body.role)) user.role = req.body.role;
-  save('users', users); res.json({ user: safeUser(user) });
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const limit = parsePageParam(req.query.limit, 25, 100, 'limit'); const offset = parsePageParam(req.query.offset, 0, 1000000, 'offset');
+    const search = String(req.query.search || '').trim(); const status = String(req.query.status || 'all'); const verification = String(req.query.verification || 'all'); const role = String(req.query.role || 'all');
+    if (supabaseAdmin) {
+      let query = supabaseAdmin.from('profiles').select('id,full_name,username,email,avatar_url,role,status,created_at,updated_at,last_sign_in_at,email_verified_at,auth_provider', { count: 'exact' });
+      if (search) {
+        const safeSearch = search.replace(/[(),]/g, '');
+        query = /^[0-9a-f-]{36}$/i.test(safeSearch) ? query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,id.eq.${safeSearch}`) : query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+      }
+      if (status !== 'all') query = query.eq('status', status);
+      if (role !== 'all') query = query.eq('role', role);
+      if (verification === 'verified') query = query.not('email_verified_at', 'is', null);
+      if (verification === 'unverified') query = query.is('email_verified_at', null);
+      const { data, count, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+      if (error) throw error;
+      const result = (data || []).map(profile => profileUser({ id: profile.id, email: profile.email, created_at: profile.created_at }, profile));
+      return res.json({ users: result, total: Number(count || 0), offset, limit, hasMore: offset + result.length < Number(count || 0) });
+    }
+    let result = users.map(safeUser); if (status !== 'all') result = result.filter(user => user.status === status); if (role !== 'all') result = result.filter(user => user.role === role); if (search) result = result.filter(user => `${user.name} ${user.email} ${user.id}`.toLowerCase().includes(search.toLowerCase()));
+    return res.json({ users: result.slice(offset, offset + limit), total: result.length, offset, limit, hasMore: offset + limit < result.length });
+  } catch (error) { return res.status(500).json({ error: 'Unable to load users.' }); }
 });
-app.delete('/api/admin/users/:id', (req, res) => {
-  const index = users.findIndex(user => user.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'User not found' });
-  if (users[index].role === 'admin') return res.status(400).json({ error: 'The primary admin cannot be deleted.' });
-  const [removed] = users.splice(index, 1); save('users', users); addActivity('delete', `${removed.name} was removed from the community`); res.json({ ok: true });
+app.get('/api/admin/users/export', async (req, res) => {
+  try {
+    let rows;
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.from('profiles').select('id,full_name,email,status,email_verified_at,auth_provider,role,created_at,last_sign_in_at').order('created_at', { ascending: false });
+      if (error) throw error; rows = data || []; await writeAudit('user.export', req.user.id, null, { count: rows.length });
+    } else rows = users.map(user => ({ id: user.id, full_name: user.name, email: user.email, status: user.status, email_verified_at: null, auth_provider: 'email', role: user.role, created_at: user.joinedAt, last_sign_in_at: null }));
+    const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const header = ['User ID', 'Full Name', 'Email', 'Status', 'Email Verification', 'Auth Method', 'Role', 'Registered', 'Last Sign In'];
+    const csv = [header, ...rows.map(row => [row.id, row.full_name, row.email, row.status, row.email_verified_at ? 'verified' : 'unverified', row.auth_provider || 'email', row.role, row.created_at, row.last_sign_in_at])].map(row => row.map(quote).join(',')).join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="genvexa-users.csv"'); return res.send(csv + '\n');
+  } catch { return res.status(500).json({ error: 'Unable to export users.' }); }
 });
-app.get('/api/admin/activity', (req, res) => {
+app.get('/api/admin/users/:id', async (req, res) => {
+  try {
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.from('profiles').select('id,full_name,username,email,avatar_url,role,status,created_at,updated_at,last_sign_in_at,email_verified_at,auth_provider').eq('id', req.params.id).maybeSingle();
+      if (error) throw error; if (!data) return res.status(404).json({ error: 'User not found' });
+      return res.json({ user: profileUser({ id: data.id, email: data.email, created_at: data.created_at }, data) });
+    }
+    const user = findUser(req.params.id); if (!user) return res.status(404).json({ error: 'User not found' }); return res.json({ user: safeUser(user) });
+  } catch { return res.status(500).json({ error: 'Unable to load user details.' }); }
+});
+app.patch('/api/admin/users/:id', async (req, res) => {
+  try {
+    if (supabaseAdmin) {
+      if (req.user.id === req.params.id && req.body?.role && req.body.role !== 'admin') return res.status(400).json({ error: 'You cannot remove your own administrator role.' });
+      const updates = {}; if (req.body?.full_name !== undefined) updates.full_name = String(req.body.full_name).trim().slice(0, 80); if (req.body?.status && ['active', 'suspended', 'disabled'].includes(req.body.status)) updates.status = req.body.status; if (req.body?.role && ['user', 'creator', 'admin'].includes(req.body.role)) updates.role = req.body.role; updates.updated_at = new Date().toISOString();
+      const { data, error } = await supabaseAdmin.from('profiles').update(updates).eq('id', req.params.id).select('id,full_name,username,email,avatar_url,role,status,created_at,updated_at,last_sign_in_at,email_verified_at,auth_provider').single();
+      if (error) throw error; await writeAudit('user.update', req.user.id, req.params.id, updates); return res.json({ user: profileUser({ id: data.id, email: data.email, created_at: data.created_at }, data) });
+    }
+    const user = findUser(req.params.id); if (!user) return res.status(404).json({ error: 'User not found' }); if (user.id === adminUser?.id && req.body?.status === 'suspended') return res.status(400).json({ error: 'The primary admin cannot be suspended.' }); if (req.body?.status) user.status = String(req.body.status); if (req.body?.role && ['member', 'creator', 'admin'].includes(req.body.role)) user.role = req.body.role; save('users', users); return res.json({ user: safeUser(user) });
+  } catch { return res.status(500).json({ error: 'Unable to update user.' }); }
+});
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    if (supabaseAdmin) {
+      if (req.user.id === req.params.id) return res.status(400).json({ error: 'You cannot delete your own account from this page.' });
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(req.params.id); if (error) throw error; await writeAudit('user.delete', req.user.id, req.params.id); return res.json({ ok: true });
+    }
+    const index = users.findIndex(user => user.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'User not found' }); if (users[index].role === 'admin') return res.status(400).json({ error: 'The primary admin cannot be deleted.' }); const [removed] = users.splice(index, 1); save('users', users); addActivity('delete', `${removed.name} was removed from the community`); return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Unable to delete user.' }); }
+});
+app.get('/api/admin/activity', async (req, res) => {
   try {
     const limit = parsePageParam(req.query.limit, 20, 50, 'limit'); const offset = parsePageParam(req.query.offset, 0, 1000000, 'offset');
-    const total = activities.length; const page = activities.slice(offset, offset + limit); res.json({ activities: page, total, offset, limit, hasMore: offset + page.length < total });
-  } catch (error) { res.status(400).json({ error: error.message }); }
+    if (supabaseAdmin) { const { data, count, error } = await supabaseAdmin.from('admin_audit_log').select('id,actor_id,action,target_user_id,metadata,success,created_at', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1); if (error) throw error; return res.json({ activities: data || [], total: Number(count || 0), offset, limit, hasMore: offset + (data?.length || 0) < Number(count || 0) }); }
+    const total = activities.length; const page = activities.slice(offset, offset + limit); return res.json({ activities: page, total, offset, limit, hasMore: offset + page.length < total });
+  } catch (error) { return res.status(500).json({ error: 'Unable to load activity.' }); }
 });
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found' }));

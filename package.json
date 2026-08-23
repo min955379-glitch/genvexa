@@ -12,12 +12,12 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "@vitejs/plugin-react": "latest",
     "express": "latest",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
-  },
-  "devDependencies": {}
+  }
 }

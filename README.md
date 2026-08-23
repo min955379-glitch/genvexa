@@ -14,8 +14,8 @@ Open the live preview or visit `http://localhost:4173`.
 ## Admin portal
 
 - URL: `/admin`
-- Admin username: `usertestpro`
-- Admin password: `pass123pro`
+- Admin access is controlled by the Supabase `profiles.role = 'admin'` field
+- No admin credentials are hardcoded in the repository
 
 The admin portal includes overview metrics, moderation, prompt search/filtering, feature/approve/delete actions, user status controls, activity logs, direct prompt creation, optional cover-image upload capped at 2 MB, and video upload or hosted-video URL support.
 
@@ -32,6 +32,15 @@ The admin portal includes overview metrics, moderation, prompt search/filtering,
 - JSON-backed persistence in `data/prompts.json`, `data/users.json`, and `data/activities.json`
 - API routes for prompts, likes, copies, favorites, auth, users, moderation, media, and stats
 
+## Supabase setup
+
+1. Add the values in `.env.example` to local/Vercel environment variables.
+2. Run `supabase/schema.sql` once in the Supabase SQL Editor.
+3. Create the first account through `/signup`, then promote that profile to `admin` from a trusted SQL session.
+4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only; it must never use the `VITE_` prefix or appear in browser code.
+
+The app uses Supabase Auth when configured, with secure bearer-token verification on the server and a protected `profiles` directory for admin user management. Without Supabase environment variables it shows a clear configuration state instead of pretending authentication is working.
+
 ## Production wiring
 
-All media is delivered through the controlled media proxy and persisted in managed storage when configured. Add a real database and object storage before deploying publicly.
+All media is delivered through the controlled media proxy and persisted in managed storage when configured. Connect a hosted database and object storage before deploying publicly.

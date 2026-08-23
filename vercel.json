@@ -25,6 +25,11 @@
       "continue": true
     },
     {
+      "src": "^/(?:login|signup|forgot-password|reset-password|verify-email|auth/(?:callback|error))$",
+      "headers": { "X-Robots-Tag": "noindex, nofollow" },
+      "continue": true
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
@@ -32,7 +37,7 @@
       "handle": "filesystem"
     },
     {
-      "src": "^/(?:|app|terms|privacy-policy|refund-policy|admin(?:/.*)?|prompt/[^/]+)$",
+      "src": "^/(?:|login|signup|forgot-password|reset-password|verify-email|auth/(?:callback|error)|app|terms|privacy-policy|refund-policy|admin(?:/.*)?|prompt/[^/]+)$",
       "dest": "/index.html"
     },
     {
