@@ -4,8 +4,8 @@ import {
   ArrowLeft, ArrowUpRight, BarChart3, Bookmark, Bot, Check, ChevronDown, ChevronLeft, ChevronRight,
   CircleHelp, Clapperboard, Clipboard, Clock3, Command, Copy, Crown, Download, Ellipsis,
   ExternalLink, Eye, FileImage, Filter, FolderHeart, GalleryHorizontalEnd, Grid2X2, Heart,
-  ImagePlus, LayoutDashboard, LifeBuoy, LogIn, LogOut, Menu, MessageCircle, MoreHorizontal,
-  PanelLeftClose, PanelLeftOpen, PenLine, Play, Plus, Search, Settings2, ShieldCheck, Sparkles,
+  ImagePlus, LayoutDashboard, LifeBuoy, LogIn, LogOut, Menu, MessageCircle, Moon, MoreHorizontal,
+  PanelLeftClose, PanelLeftOpen, PenLine, Play, Plus, Search, Settings2, ShieldCheck, Sparkles, Sun,
   Star, Tag, Trash2, TrendingUp, Upload, UserPlus, Users, X
 } from 'lucide-react';
 import './styles.css';
@@ -52,6 +52,20 @@ function setStoredUser(user) {
   else if (user) localStorage.setItem('genvexa_user', JSON.stringify(user));
   else localStorage.removeItem('genvexa_user');
 }
+function getAdminSnapshot() {
+  try { return JSON.parse(localStorage.getItem('genvexa_admin_snapshot') || 'null'); } catch { return null; }
+}
+function setAdminSnapshot(snapshot) {
+  if (snapshot) localStorage.setItem('genvexa_admin_snapshot', JSON.stringify(snapshot));
+  else localStorage.removeItem('genvexa_admin_snapshot');
+}
+function mergeAdminSnapshot(items, savedItems, key = 'id') {
+  if (!Array.isArray(savedItems) || !savedItems.length) return items;
+  const saved = new Map(savedItems.map(item => [item[key], item]));
+  const merged = items.map(item => saved.has(item[key]) ? { ...item, ...saved.get(item[key]) } : item);
+  const existing = new Set(items.map(item => item[key]));
+  return [...merged, ...savedItems.filter(item => !existing.has(item[key]))];
+}
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('genvexa_history') || '[]'); } catch { return []; }
 }
@@ -80,7 +94,12 @@ function App() {
   const [user, setUser] = useState(getStoredUser);
   const [path, setPath] = useState(window.location.pathname);
   const [authReady, setAuthReady] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('genvexa_theme') || 'light');
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('genvexa_theme', theme);
+  }, [theme]);
   useEffect(() => {
     const handlePop = () => setPath(window.location.pathname);
     window.addEventListener('popstate', handlePop);
@@ -95,16 +114,17 @@ function App() {
   };
   const onLogin = (nextUser) => { setUser(nextUser); setStoredUser(nextUser); };
   const onLogout = () => { api('/api/auth/logout', { method: 'POST' }).catch(() => {}); setUser(null); setStoredUser(null); navigate('/'); };
+  const toggleTheme = () => setTheme(current => current === 'light' ? 'dark' : 'light');
 
   if (!authReady && path.startsWith('/admin')) return <div className="boot-screen"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><strong>Loading secure workspace…</strong></div>;
-  if (path.startsWith('/admin')) return <AdminApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} />;
-  if (path === '/terms' || path === '/privacy-policy' || path === '/refund-policy' || path === '/app') return <InfoPage path={path} navigate={navigate} />;
-  if (path.startsWith('/prompt/')) return <MainApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} initialPromptId={decodeURIComponent(path.replace('/prompt/', ''))} />;
-  if (path !== '/') return <NotFound navigate={navigate} />;
-  return <MainApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} />;
+  if (path.startsWith('/admin')) return <AdminApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />;
+  if (path === '/terms' || path === '/privacy-policy' || path === '/refund-policy' || path === '/app') return <InfoPage path={path} navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />;
+  if (path.startsWith('/prompt/')) return <MainApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} initialPromptId={decodeURIComponent(path.replace('/prompt/', ''))} theme={theme} onToggleTheme={toggleTheme} />;
+  if (path !== '/') return <NotFound navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />;
+  return <MainApp user={user} onLogin={onLogin} onLogout={onLogout} navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />;
 }
 
-function MainApp({ user, onLogin, onLogout, navigate, initialPromptId }) {
+function MainApp({ user, onLogin, onLogout, navigate, initialPromptId, theme, onToggleTheme }) {
   const [view, setView] = useState('home');
   const [category, setCategory] = useState('All');
   const [model, setModel] = useState('All');
@@ -260,6 +280,8 @@ function MainApp({ user, onLogin, onLogout, navigate, initialPromptId }) {
           onPublish={() => setModal('publish')}
           onAccount={() => setModal('account')}
           onMenu={() => setMobileSidebar(true)}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
         {view === 'home' && (
           <HomeView
@@ -352,12 +374,13 @@ function Sidebar({ view, category, onView, onSearch, onCategory, onPublish, mobi
   );
 }
 
-function Topbar({ user, search, onSearch, onPublish, onAccount, onMenu }) {
+function Topbar({ user, search, onSearch, onPublish, onAccount, onMenu, theme, onToggleTheme }) {
   return <header className="topbar">
     <button className="menu-button" onClick={onMenu} aria-label="Open navigation"><Menu size={20} /></button>
     <button className="top-search" onClick={onSearch} aria-label="Search prompts"><Search size={17} /><span>{search || 'Search prompts, styles, creators...'}</span><kbd><Command size={11} />K</kbd></button>
     <div className="topbar-actions">
       <button className="topbar-link desktop-only" onClick={onPublish}><Plus size={16} /> Publish</button>
+      <button className="theme-button" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
       <button className="account-button" onClick={onAccount} aria-label="Open account"><span className="avatar avatar-top" style={{ '--avatar-color': user?.color || '#b6a9e9' }}>{user?.avatar || 'ME'}</span><ChevronDown size={14} className="desktop-only" /></button>
     </div>
   </header>;
@@ -421,12 +444,12 @@ const legalPages = {
   '/refund-policy': { label: 'REFUND POLICY', title: 'Simple, transparent support.', intro: 'Genvexa does not currently sell subscriptions. If you need help with an account or a billing issue from a future paid feature, contact support before disputing a charge.', sections: [['Contact support', 'Email support@genvexa.app with your account email, order details, and a short description of the issue.'], ['Review', 'We confirm receipt within two business days and review platform-related issues fairly.'], ['Payment provider rules', 'Any refund is returned through the original payment method and remains subject to the payment provider’s processing timelines.']] },
   '/app': { label: 'GENVEXA MOBILE', title: 'Inspiration, anywhere.', intro: 'The Genvexa mobile experience is coming soon. Until then, the responsive web app works beautifully on your phone.', sections: [['Browse on the go', 'Search the complete prompt library, explore visual categories, and open full prompt details from any screen.'], ['Keep your shelf in sync', 'Sign in to keep Favorites and History available across the devices you use.'], ['Get notified', 'Follow Genvexa on social or check back here for the mobile release announcement.']] }
 };
-function InfoPage({ path, navigate }) {
+function InfoPage({ path, navigate, theme, onToggleTheme }) {
   const page = legalPages[path];
   useEffect(() => { const previous = document.title; document.title = `${page.title} · Genvexa`; return () => { document.title = previous; }; }, [page.title]);
-  return <div className="info-shell"><header className="info-header"><a className="brand" href="/" onClick={event => { event.preventDefault(); navigate('/'); }}><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><span>Genvexa</span></a><button className="button-secondary" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></header><main className="info-main"><span className="section-kicker">{page.label}</span><h1>{page.title}</h1><p className="info-intro">{page.intro}</p><div className="info-sections">{page.sections.map(([heading, body]) => <section key={heading}><h2>{heading}</h2><p>{body}</p></section>)}</div><div className="info-contact"><strong>Need help?</strong><span>support@genvexa.app</span></div></main><Footer /></div>;
+  return <div className="info-shell"><header className="info-header"><a className="brand" href="/" onClick={event => { event.preventDefault(); navigate('/'); }}><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><span>Genvexa</span></a><div className="info-header-actions"><button className="theme-button" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button><button className="button-secondary" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></div></header><main className="info-main"><span className="section-kicker">{page.label}</span><h1>{page.title}</h1><p className="info-intro">{page.intro}</p><div className="info-sections">{page.sections.map(([heading, body]) => <section key={heading}><h2>{heading}</h2><p>{body}</p></section>)}</div><div className="info-contact"><strong>Need help?</strong><span>support@genvexa.app</span></div></main><Footer /></div>;
 }
-function NotFound({ navigate }) { useEffect(() => { const previous = document.title; document.title = 'Page not found · Genvexa'; return () => { document.title = previous; }; }, []); return <div className="not-found-shell"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><span className="section-kicker">404 · PAGE NOT FOUND</span><h1>That page wandered off.</h1><p>The link is no longer here, but there are plenty of good ideas waiting in the gallery.</p><button className="button-primary" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></div>; }
+function NotFound({ navigate, theme, onToggleTheme }) { useEffect(() => { const previous = document.title; document.title = 'Page not found · Genvexa'; return () => { document.title = previous; }; }, []); return <div className="not-found-shell"><div className="not-found-actions"><button className="theme-button" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button></div><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><span className="section-kicker">404 · PAGE NOT FOUND</span><h1>That page wandered off.</h1><p>The link is no longer here, but there are plenty of good ideas waiting in the gallery.</p><button className="button-primary" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></div>; }
 
 function SearchPalette({ value, onChange, onClose, onSubmit }) {
   const input = useRef(null);
@@ -469,23 +492,23 @@ function PublishModal({ user, onClose, onSubmit, onLogin }) {
   return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-dialog-title"><button className="modal-close" aria-label="Close publish dialog" onClick={onClose}><X size={18} /></button><div className="publish-top"><span className="publish-big-icon"><Upload size={21} /></span><div><span className="section-kicker">COMMUNITY SUBMISSIONS</span><h2 id="publish-dialog-title">Share a prompt with the community.</h2><p>Publish a useful idea and help the next creator start faster.</p></div></div><form onSubmit={submit}><label>Prompt title<input required value={title} onChange={event => setTitle(event.target.value)} placeholder="Give your idea a clear name" /></label><label>Prompt<textarea required value={prompt} onChange={event => setPrompt(event.target.value)} rows="7" placeholder="Write the full prompt so others can remix it..." /></label><div className="form-grid"><label>Category<select value={category} onChange={event => setCategory(event.target.value)}>{categories.filter(item => item.name !== 'All').map(item => <option key={item.name}>{item.name}</option>)}</select></label><label>Model<select value={model} onChange={event => setModel(event.target.value)}>{modelOptions.map(option => <option key={option}>{option}</option>)}</select></label></div><div className="publish-foot"><span><ShieldCheck size={14} /> Every submission is reviewed</span><button className="button-primary" disabled={submitting}>{submitting ? 'Submitting...' : 'Submit for review'} <ArrowUpRight size={15} /></button></div></form></div></div>;
 }
 
-function AdminApp({ user, onLogin, onLogout, navigate }) {
+function AdminApp({ user, onLogin, onLogout, navigate, theme, onToggleTheme }) {
   const [toast, setToast] = useState(null);
   const showToast = (message, tone = 'success') => { setToast({ message, tone }); window.clearTimeout(showToast.timer); showToast.timer = window.setTimeout(() => setToast(null), 3200); };
-  if (!user || user.role !== 'admin') return <AdminGate onLogin={onLogin} navigate={navigate} />;
-  return <AdminPortal user={user} onLogout={onLogout} navigate={navigate} toast={toast} showToast={showToast} />;
+  if (!user || user.role !== 'admin') return <AdminGate onLogin={onLogin} navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />;
+  return <AdminPortal user={user} onLogout={onLogout} navigate={navigate} toast={toast} showToast={showToast} theme={theme} onToggleTheme={onToggleTheme} />;
 }
 
-function AdminGate({ onLogin, navigate }) {
+function AdminGate({ onLogin, navigate, theme, onToggleTheme }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const submit = async (event) => { event.preventDefault(); setLoading(true); setError(''); try { const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); if (data.user.role !== 'admin') throw new Error('This account does not have admin access.'); onLogin(data.user); } catch (err) { setError(err.message); } finally { setLoading(false); } };
-  return <div className="admin-gate"><div className="admin-gate-brand"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><strong>Genvexa</strong><span>Control room</span></div><main className="admin-gate-card" role="main"><div className="admin-lock"><ShieldCheck size={22} /></div><span className="section-kicker">RESTRICTED WORKSPACE</span><h1>Sign in to the admin portal.</h1><p>Manage prompts, creators, reviews, and platform activity from one place.</p><form onSubmit={submit} autoComplete="off"><label>Username<input name="username" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} type="text" required /></label><label>Password<input name="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} type="password" required /></label>{error && <div className="form-error" role="alert">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Checking access...' : 'Enter control room'} <ArrowUpRight size={15} /></button></form><button className="back-to-site" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></main></div>;
+  return <div className="admin-gate"><div className="admin-gate-brand"><span className="brand-mark"><Crown size={18} fill="currentColor" /></span><strong>Genvexa</strong><span>Control room</span><button className="theme-button admin-gate-theme" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button></div><main className="admin-gate-card" role="main"><div className="admin-lock"><ShieldCheck size={22} /></div><span className="section-kicker">RESTRICTED WORKSPACE</span><h1>Sign in to the admin portal.</h1><p>Manage prompts, creators, reviews, and platform activity from one place.</p><form onSubmit={submit} autoComplete="off"><label>Username<input name="username" autoComplete="username" value={username} onChange={event => setUsername(event.target.value)} type="text" required /></label><label>Password<input name="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} type="password" required /></label>{error && <div className="form-error" role="alert">{error}</div>}<button className="button-primary button-wide" disabled={loading}>{loading ? 'Checking access...' : 'Enter control room'} <ArrowUpRight size={15} /></button></form><button className="back-to-site" onClick={() => navigate('/')}><ArrowLeft size={15} /> Back to gallery</button></main></div>;
 }
 
-function AdminPortal({ user, onLogout, navigate, toast, showToast }) {
+function AdminPortal({ user, onLogout, navigate, toast, showToast, theme, onToggleTheme }) {
   const [section, setSection] = useState('overview');
   const [stats, setStats] = useState(null);
   const [prompts, setPrompts] = useState([]);
@@ -500,13 +523,16 @@ function AdminPortal({ user, onLogout, navigate, toast, showToast }) {
   const [systemHealthy, setSystemHealthy] = useState(null);
   const [promptLoading, setPromptLoading] = useState(true);
   const [promptLoadingMore, setPromptLoadingMore] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState(() => getAdminSnapshot()?.savedAt || null);
+  const [savedSnapshot] = useState(getAdminSnapshot);
   const promptAbort = useRef(null);
 
   const loadMeta = async () => {
     setMetaLoading(true);
     try {
       const [healthData, statsData, userData, activityData] = await Promise.all([api('/api/health'), api('/api/admin/stats'), api('/api/admin/users'), api('/api/admin/activity?limit=20&offset=0')]);
-      setSystemHealthy(Boolean(healthData.ok)); setStats(statsData.stats); setUsers(userData.users || []); setActivities(activityData.activities || []);
+      setSystemHealthy(Boolean(healthData.ok)); setStats(statsData.stats); setUsers(mergeAdminSnapshot(userData.users || [], savedSnapshot?.users)); setActivities(activityData.activities || []);
     } catch (error) { showToast(error.message, 'error'); }
     finally { setMetaLoading(false); }
   };
@@ -516,7 +542,9 @@ function AdminPortal({ user, onLogout, navigate, toast, showToast }) {
     if (append) setPromptLoadingMore(true); else setPromptLoading(true);
     try {
       const data = await api(`/api/admin/prompts?status=${promptFilter}&search=${encodeURIComponent(promptSearch)}&limit=25&offset=${offset}`, { signal: controller.signal });
-      setPrompts(current => append ? [...current, ...(data.prompts || [])] : (data.prompts || []));
+      const serverItems = data.prompts || [];
+      const sourceItems = !promptSearch && promptFilter === 'all' ? mergeAdminSnapshot(serverItems, savedSnapshot?.prompts) : serverItems;
+      setPrompts(current => append ? [...current, ...sourceItems] : sourceItems);
       setPromptTotal(data.total || 0); setPromptHasMore(Boolean(data.hasMore));
     } catch (error) { if (error.name !== 'AbortError') showToast(error.message, 'error'); }
     finally { if (!controller.signal.aborted) { if (append) setPromptLoadingMore(false); else setPromptLoading(false); } }
@@ -524,13 +552,21 @@ function AdminPortal({ user, onLogout, navigate, toast, showToast }) {
   useEffect(() => { loadMeta(); return () => promptAbort.current?.abort(); }, []);
   useEffect(() => { const timer = window.setTimeout(() => loadPrompts(0, false), promptSearch ? 350 : 0); return () => window.clearTimeout(timer); }, [promptFilter, promptSearch]);
 
-  const updatePrompt = async (id, patch) => { try { await api(`/api/admin/prompts/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); showToast(patch.status === 'published' ? 'Prompt approved and published' : patch.featured ? 'Prompt featured' : 'Prompt updated'); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
-  const deletePrompt = async (id) => { if (!window.confirm('Remove this prompt from the gallery?')) return; try { await api(`/api/admin/prompts/${id}`, { method: 'DELETE' }); showToast('Prompt removed'); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
-  const updateUser = async (id, patch) => { try { await api(`/api/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); showToast('User updated'); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
-  const deleteUser = async (id) => { if (!window.confirm('Permanently remove this account?')) return; try { await api(`/api/admin/users/${id}`, { method: 'DELETE' }); showToast('User removed'); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
+  const updatePrompt = async (id, patch) => { try { await api(`/api/admin/prompts/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); showToast(patch.status === 'published' ? 'Prompt approved and published' : patch.featured ? 'Prompt featured' : 'Prompt updated'); setDirty(true); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
+  const deletePrompt = async (id) => { if (!window.confirm('Remove this prompt from the gallery?')) return; try { await api(`/api/admin/prompts/${id}`, { method: 'DELETE' }); showToast('Prompt removed'); setDirty(true); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
+  const updateUser = async (id, patch) => { try { await api(`/api/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); showToast('User updated'); setDirty(true); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
+  const deleteUser = async (id) => { if (!window.confirm('Permanently remove this account?')) return; try { await api(`/api/admin/users/${id}`, { method: 'DELETE' }); showToast('User removed'); setDirty(true); loadMeta(); } catch (error) { showToast(error.message, 'error'); } };
+  const saveChanges = async () => {
+    const saved = new Date().toISOString();
+    setAdminSnapshot({ savedAt: saved, prompts, users });
+    setSavedAt(saved);
+    setDirty(false);
+    try { await api('/api/admin/save', { method: 'POST', body: JSON.stringify({ savedAt: saved }) }); showToast('Changes saved successfully'); }
+    catch (error) { showToast(`Saved on this device. ${error.message}`, 'error'); }
+  };
 
   const navItems = [{ id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'prompts', label: 'Prompts', icon: FileImage, badge: stats?.pending || 0 }, { id: 'users', label: 'Users', icon: Users }, { id: 'activity', label: 'Activity', icon: BarChart3 }];
-  return <div className="admin-shell"><aside className="admin-sidebar"><div className="admin-brand"><span className="brand-mark"><Crown size={17} fill="currentColor" /></span><div><strong>Genvexa</strong><small>Admin studio</small></div></div><div className="admin-nav-label">Workspace</div>{navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={`admin-nav-row ${section === item.id ? 'admin-nav-active' : ''}`} aria-current={section === item.id ? 'page' : undefined} aria-label={item.label} onClick={() => setSection(item.id)}><Icon size={17} /><span>{item.label}</span>{item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}</button>; })}<div className="admin-nav-label admin-nav-label-gap">System</div><button className="admin-nav-row" aria-label="Open settings" onClick={() => showToast('Settings are available in your deployment configuration')}><Settings2 size={17} /><span>Settings</span></button><button className="admin-nav-row" aria-label="View public gallery" onClick={() => navigate('/')}><ExternalLink size={17} /><span>View gallery</span></button><div className="admin-sidebar-bottom"><div className="system-status"><span className="status-pulse" /><span>{metaLoading ? 'Checking services…' : systemHealthy ? 'Services healthy' : 'Service check failed'}</span></div><button className="admin-user" onClick={onLogout} aria-label="Sign out"><span className="avatar avatar-small admin-avatar">{user.avatar}</span><span><strong>{user.name}</strong><small>Administrator</small></span><LogOut size={14} /></button></div></aside><main className="admin-main"><header className="admin-topbar"><div><span className="admin-breadcrumb">CONTROL ROOM <span>/</span> {section}</span><h1>{section === 'overview' ? `Welcome back, ${user.name.split(' ')[0]}.` : section[0].toUpperCase() + section.slice(1)}</h1></div><div className="admin-top-actions"><button className="admin-help" onClick={() => showToast('For help, contact support@genvexa.app')}><LifeBuoy size={16} /> Help center</button><button className="admin-create" onClick={() => setAdminModal('create')}><Plus size={16} /> New prompt</button></div></header>{section === 'overview' && <AdminOverview stats={stats} prompts={prompts} users={users} activities={activities} onNavigate={setSection} onApprove={(id) => updatePrompt(id, { status: 'published' })} onOpenPrompt={(prompt) => showToast(`Open “${prompt.title}” from the Prompts tab`)} />}{section === 'prompts' && <AdminPrompts prompts={prompts} total={promptTotal} hasMore={promptHasMore} filter={promptFilter} setFilter={setPromptFilter} search={promptSearch} setSearch={setPromptSearch} onUpdate={updatePrompt} onDelete={deletePrompt} loading={promptLoading} loadingMore={promptLoadingMore} onLoadMore={() => loadPrompts(prompts.length, true)} />}{section === 'users' && <AdminUsers users={users} onUpdate={updateUser} onDelete={deleteUser} onInvite={() => showToast('Ask the creator to register from the public sign-in dialog.')} />}{section === 'activity' && <AdminActivity activities={activities} prompts={prompts} onAction={() => showToast('Activity records are read-only audit entries')} />}</main>{adminModal === 'create' && <AdminPromptModal onClose={() => setAdminModal(null)} onSave={async payload => { try { await api('/api/admin/prompts', { method: 'POST', body: JSON.stringify({ ...payload, status: 'published', creator: { name: user.name, handle: '@admin', avatar: user.avatar, color: '#7561d8' } }) }); setAdminModal(null); showToast('Prompt created'); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } }} />}{toast && <div className={`toast toast-${toast.tone}`} role="status" aria-live="polite"><span className="toast-check">{toast.tone === 'error' ? <X size={14} /> : <Check size={14} />}</span>{toast.message}</div>}</div>;
+  return <div className="admin-shell"><aside className="admin-sidebar"><div className="admin-brand"><span className="brand-mark"><Crown size={17} fill="currentColor" /></span><div><strong>Genvexa</strong><small>Admin studio</small></div></div><div className="admin-nav-label">Workspace</div>{navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={`admin-nav-row ${section === item.id ? 'admin-nav-active' : ''}`} aria-current={section === item.id ? 'page' : undefined} aria-label={item.label} onClick={() => setSection(item.id)}><Icon size={17} /><span>{item.label}</span>{item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}</button>; })}<div className="admin-nav-label admin-nav-label-gap">System</div><button className="admin-nav-row" aria-label="Open settings" onClick={() => showToast('Settings are available in your deployment configuration')}><Settings2 size={17} /><span>Settings</span></button><button className="admin-nav-row" aria-label="View public gallery" onClick={() => navigate('/')}><ExternalLink size={17} /><span>View gallery</span></button><div className="admin-sidebar-bottom"><div className="system-status"><span className="status-pulse" /><span>{metaLoading ? 'Checking services…' : systemHealthy ? 'Services healthy' : 'Service check failed'}</span></div><button className="admin-user" onClick={onLogout} aria-label="Sign out"><span className="avatar avatar-small admin-avatar">{user.avatar}</span><span><strong>{user.name}</strong><small>Administrator</small></span><LogOut size={14} /></button></div></aside><main className="admin-main"><header className="admin-topbar"><div><span className="admin-breadcrumb">CONTROL ROOM <span>/</span> {section}</span><h1>{section === 'overview' ? `Welcome back, ${user.name.split(' ')[0]}.` : section[0].toUpperCase() + section.slice(1)}</h1></div><div className="admin-top-actions"><button className="theme-button admin-theme-button" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button><button className={`admin-save ${dirty ? 'admin-save-dirty' : ''}`} onClick={saveChanges} aria-label={dirty ? 'Save changes' : 'All changes saved'}><Check size={15} /> {dirty ? 'Save changes' : savedAt ? 'Saved' : 'Save'}</button><button className="admin-help" onClick={() => showToast('For help, contact support@genvexa.app')}><LifeBuoy size={16} /> Help center</button><button className="admin-create" onClick={() => setAdminModal('create')}><Plus size={16} /> New prompt</button></div></header>{section === 'overview' && <AdminOverview stats={stats} prompts={prompts} users={users} activities={activities} onNavigate={setSection} onApprove={(id) => updatePrompt(id, { status: 'published' })} onOpenPrompt={(prompt) => showToast(`Open “${prompt.title}” from the Prompts tab`)} />}{section === 'prompts' && <AdminPrompts prompts={prompts} total={promptTotal} hasMore={promptHasMore} filter={promptFilter} setFilter={setPromptFilter} search={promptSearch} setSearch={setPromptSearch} onUpdate={updatePrompt} onDelete={deletePrompt} loading={promptLoading} loadingMore={promptLoadingMore} onLoadMore={() => loadPrompts(prompts.length, true)} />}{section === 'users' && <AdminUsers users={users} onUpdate={updateUser} onDelete={deleteUser} onInvite={() => showToast('Ask the creator to register from the public sign-in dialog.')} />}{section === 'activity' && <AdminActivity activities={activities} prompts={prompts} onAction={() => showToast('Activity records are read-only audit entries')} />}</main>{adminModal === 'create' && <AdminPromptModal onClose={() => setAdminModal(null)} onSave={async payload => { try { await api('/api/admin/prompts', { method: 'POST', body: JSON.stringify({ ...payload, status: 'published', creator: { name: user.name, handle: '@admin', avatar: user.avatar, color: '#7561d8' } }) }); setAdminModal(null); setDirty(true); showToast('Prompt created — press Save changes to keep a browser backup.'); loadPrompts(0, false); loadMeta(); } catch (error) { showToast(error.message, 'error'); } }} />}{toast && <div className={`toast toast-${toast.tone}`} role="status" aria-live="polite"><span className="toast-check">{toast.tone === 'error' ? <X size={14} /> : <Check size={14} />}</span>{toast.message}</div>}</div>;
 }
 
 function AdminOverview({ stats, prompts, users, activities, onNavigate, onApprove, onOpenPrompt }) {
